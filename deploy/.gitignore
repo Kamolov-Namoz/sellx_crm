@@ -1,5 +1,6 @@
-# Environment files with secrets
+# Environment with secrets
 .env
+!.env.example
 
 # SSL certificates
 *.pem

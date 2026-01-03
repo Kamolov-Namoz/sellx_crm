@@ -30,15 +30,15 @@ export const clientService = {
   },
 
   async createClient(data: ClientFormData): Promise<ApiResponse<Client>> {
-    // Remove empty optional fields
     const cleanData: Record<string, unknown> = {
       fullName: data.fullName,
       phoneNumber: data.phoneNumber,
       location: data.location,
       status: data.status,
     };
-    if (data.brandName) cleanData.brandName = data.brandName;
-    if (data.notes) cleanData.notes = data.notes;
+    // Include optional fields even if empty string (to allow clearing)
+    if (data.brandName !== undefined) cleanData.brandName = data.brandName || '';
+    if (data.notes !== undefined) cleanData.notes = data.notes || '';
     if (data.followUpDate) cleanData.followUpDate = new Date(data.followUpDate).toISOString();
     
     const response = await api.post<ApiResponse<Client>>('/clients', cleanData);
@@ -46,15 +46,16 @@ export const clientService = {
   },
 
   async updateClient(id: string, data: Partial<ClientFormData>): Promise<ApiResponse<Client>> {
-    // Remove empty optional fields
     const cleanData: Record<string, unknown> = {};
-    if (data.fullName) cleanData.fullName = data.fullName;
-    if (data.phoneNumber) cleanData.phoneNumber = data.phoneNumber;
-    if (data.location) cleanData.location = data.location;
-    if (data.brandName) cleanData.brandName = data.brandName;
-    if (data.status) cleanData.status = data.status;
-    if (data.notes) cleanData.notes = data.notes;
-    if (data.followUpDate) cleanData.followUpDate = new Date(data.followUpDate).toISOString();
+    if (data.fullName !== undefined) cleanData.fullName = data.fullName;
+    if (data.phoneNumber !== undefined) cleanData.phoneNumber = data.phoneNumber;
+    if (data.location !== undefined) cleanData.location = data.location;
+    if (data.brandName !== undefined) cleanData.brandName = data.brandName;
+    if (data.status !== undefined) cleanData.status = data.status;
+    if (data.notes !== undefined) cleanData.notes = data.notes;
+    if (data.followUpDate !== undefined) {
+      cleanData.followUpDate = data.followUpDate ? new Date(data.followUpDate).toISOString() : null;
+    }
     
     const response = await api.put<ApiResponse<Client>>(`/clients/${id}`, cleanData);
     return response.data;

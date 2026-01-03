@@ -53,15 +53,16 @@ export class ReminderService {
   }
 
   /**
-   * Get pending reminders that are due
+   * Get pending reminders that are due (with limit for performance)
    */
-  async getDueReminders() {
+  async getDueReminders(limit = 100) {
     const now = new Date();
 
     const reminders = await ScheduledReminder.find({
       scheduledTime: { $lte: now },
       status: 'pending',
     })
+      .limit(limit)
       .populate('clientId')
       .populate('userId')
       .lean();
@@ -70,10 +71,10 @@ export class ReminderService {
   }
 
   /**
-   * Process due reminders - send notifications
+   * Process due reminders - send notifications (batch processing)
    */
   async processDueReminders() {
-    const dueReminders = await this.getDueReminders();
+    const dueReminders = await this.getDueReminders(50); // Process max 50 at a time
 
     const results = await Promise.allSettled(
       dueReminders.map(async (reminder) => {

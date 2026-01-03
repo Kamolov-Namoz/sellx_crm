@@ -36,7 +36,8 @@ export default function ClientsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [statusFilter, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter]);
 
   useEffect(() => {
     loadClients();

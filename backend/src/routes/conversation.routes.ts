@@ -44,8 +44,7 @@ const createConversationValidation = [
     .isLength({ max: 2000 })
     .withMessage('Summary cannot exceed 2000 characters'),
   body('nextFollowUpDate')
-    .notEmpty()
-    .withMessage('Next follow-up date is required')
+    .optional({ values: 'null' })
     .isISO8601()
     .withMessage('Invalid date format'),
 ];

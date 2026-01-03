@@ -3,6 +3,7 @@ import { reminderService } from './reminder.service';
 
 export class SchedulerService {
   private cronJob: cron.ScheduledTask | null = null;
+  private isProcessing = false;
 
   /**
    * Start the reminder scheduler
@@ -16,6 +17,12 @@ export class SchedulerService {
 
     // Run every minute
     this.cronJob = cron.schedule('* * * * *', async () => {
+      // Prevent concurrent processing
+      if (this.isProcessing) {
+        return;
+      }
+      
+      this.isProcessing = true;
       try {
         const result = await reminderService.processDueReminders();
         
@@ -26,6 +33,8 @@ export class SchedulerService {
         }
       } catch (error) {
         console.error('Scheduler error:', error);
+      } finally {
+        this.isProcessing = false;
       }
     });
 

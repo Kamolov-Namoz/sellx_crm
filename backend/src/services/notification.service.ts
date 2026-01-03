@@ -5,6 +5,7 @@ import { User } from '../models';
 
 // Initialize Firebase Admin SDK
 let firebaseInitialized = false;
+let firebaseInitError: Error | null = null;
 
 function initializeFirebase() {
   if (firebaseInitialized) return;
@@ -21,10 +22,11 @@ function initializeFirebase() {
       firebaseInitialized = true;
       console.warn('Firebase Admin SDK initialized');
     } catch (error) {
+      firebaseInitError = error as Error;
       console.error('Failed to initialize Firebase:', error);
     }
   } else {
-    console.warn('Firebase credentials not configured - notifications disabled');
+    console.warn('Firebase credentials not configured - push notifications disabled');
   }
 }
 
@@ -65,9 +67,15 @@ export class NotificationService {
     tokens: string[],
     data: FollowUpNotificationData
   ) {
-    if (!firebaseInitialized || tokens.length === 0) {
-      console.warn('Skipping notification - Firebase not initialized or no tokens');
-      return { success: false, reason: 'not_configured' };
+    if (!firebaseInitialized) {
+      const reason = firebaseInitError ? 'init_error' : 'not_configured';
+      console.warn(`Skipping notification - Firebase ${reason}`);
+      return { success: false, reason };
+    }
+    
+    if (tokens.length === 0) {
+      console.warn('Skipping notification - no FCM tokens');
+      return { success: false, reason: 'no_tokens' };
     }
 
     const message = {
@@ -130,8 +138,12 @@ export class NotificationService {
     body: string,
     data?: Record<string, string>
   ) {
-    if (!firebaseInitialized || tokens.length === 0) {
-      return { success: false, reason: 'not_configured' };
+    if (!firebaseInitialized) {
+      return { success: false, reason: firebaseInitError ? 'init_error' : 'not_configured' };
+    }
+    
+    if (tokens.length === 0) {
+      return { success: false, reason: 'no_tokens' };
     }
 
     const message = {

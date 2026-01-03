@@ -55,7 +55,8 @@ export default function ClientForm({
     if (autoDetectLocation && !initialData?.location) {
       handleGetLocation();
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoDetectLocation]);
 
   const handleGetLocation = async () => {
     const address = await getLocation();

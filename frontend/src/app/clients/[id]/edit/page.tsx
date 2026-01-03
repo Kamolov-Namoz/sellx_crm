@@ -20,6 +20,7 @@ export default function EditClientPage() {
 
   useEffect(() => {
     loadClient();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   const loadClient = async () => {

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -H 0.0.0.0",
+    "dev": "next dev -H 0.0.0.0 -p 3001",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -22,6 +22,7 @@
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.49.2",
     "react-leaflet": "^4.2.1",
+    "sales-automation-pwa": "file:..",
     "zustand": "^4.4.7"
   },
   "devDependencies": {

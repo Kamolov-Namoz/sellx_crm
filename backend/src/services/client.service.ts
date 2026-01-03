@@ -154,21 +154,28 @@ export class ClientService {
     }
 
     // Track if follow-up date changed
-    const newFollowUpDate = data.followUpDate ? new Date(data.followUpDate) : undefined;
+    const oldFollowUpDate = client.followUpDate;
+    let newFollowUpDate: Date | undefined | null = undefined;
+    
+    if (data.followUpDate !== undefined) {
+      newFollowUpDate = data.followUpDate ? new Date(data.followUpDate) : null;
+    }
 
     // Update fields
     if (data.fullName !== undefined) client.fullName = data.fullName;
     if (data.phoneNumber !== undefined) client.phoneNumber = data.phoneNumber;
     if (data.location !== undefined) client.location = data.location;
-    if (data.brandName !== undefined) client.brandName = data.brandName;
-    if (data.notes !== undefined) client.notes = data.notes;
+    if (data.brandName !== undefined) client.brandName = data.brandName || undefined;
+    if (data.notes !== undefined) client.notes = data.notes || undefined;
     if (data.status !== undefined) client.status = data.status as ClientStatus;
-    if (data.followUpDate !== undefined) client.followUpDate = newFollowUpDate;
+    if (newFollowUpDate !== undefined) {
+      client.followUpDate = newFollowUpDate || undefined;
+    }
 
     await client.save();
 
     // Update reminder if follow-up date changed
-    if (data.followUpDate !== undefined) {
+    if (newFollowUpDate !== undefined && newFollowUpDate?.getTime() !== oldFollowUpDate?.getTime()) {
       // Cancel old reminder
       await this.cancelReminder(clientId);
 

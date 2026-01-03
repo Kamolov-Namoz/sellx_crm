@@ -1,11 +1,11 @@
-import { Conversation } from '../models/conversation.model';
+import { Conversation, ConversationDocument } from '../models/conversation.model';
 import { Client } from '../models/client.model';
 import { ScheduledReminder } from '../models/reminder.model';
 import { AppError } from '../middleware/error.middleware';
-import { CreateConversationRequest, IConversation } from '../types';
+import { CreateConversationRequest } from '../types';
 
 class ConversationService {
-  async getConversations(userId: string, clientId: string): Promise<IConversation[]> {
+  async getConversations(userId: string, clientId: string): Promise<ConversationDocument[]> {
     // Verify client belongs to user
     const client = await Client.findOne({ _id: clientId, userId });
     if (!client) {
@@ -16,18 +16,20 @@ class ConversationService {
       .sort({ createdAt: -1 })
       .lean();
     
-    return conversations as IConversation[];
+    return conversations as ConversationDocument[];
   }
 
   async createConversation(
     userId: string,
     data: CreateConversationRequest
-  ): Promise<IConversation> {
+  ): Promise<ConversationDocument> {
     // Verify client belongs to user
     const client = await Client.findOne({ _id: data.clientId, userId });
     if (!client) {
       throw new AppError('Client not found', 404, 'CLIENT_NOT_FOUND');
     }
+
+    const nextFollowUpDate = data.nextFollowUpDate ? new Date(data.nextFollowUpDate) : undefined;
 
     const conversation = new Conversation({
       clientId: data.clientId,
@@ -35,25 +37,36 @@ class ConversationService {
       type: data.type,
       content: data.content,
       summary: data.summary,
-      nextFollowUpDate: new Date(data.nextFollowUpDate),
+      nextFollowUpDate,
       metadata: data.metadata,
     });
 
     await conversation.save();
 
-    // Update client's lastConversationSummary and followUpDate
-    await Client.findByIdAndUpdate(data.clientId, {
+    // Update client's lastConversationSummary
+    const updateData: { lastConversationSummary: string; followUpDate?: Date } = {
       lastConversationSummary: data.summary,
-      followUpDate: new Date(data.nextFollowUpDate),
-    });
+    };
 
-    // Create reminder for follow-up
-    await ScheduledReminder.create({
-      userId,
-      clientId: data.clientId,
-      scheduledTime: new Date(data.nextFollowUpDate),
-      status: 'pending',
-    });
+    // Only update followUpDate if provided
+    if (nextFollowUpDate) {
+      updateData.followUpDate = nextFollowUpDate;
+
+      // Cancel existing pending reminders and create new one
+      await ScheduledReminder.updateMany(
+        { clientId: data.clientId, status: 'pending' },
+        { status: 'cancelled' }
+      );
+      
+      await ScheduledReminder.create({
+        userId,
+        clientId: data.clientId,
+        scheduledTime: nextFollowUpDate,
+        status: 'pending',
+      });
+    }
+
+    await Client.findByIdAndUpdate(data.clientId, updateData);
 
     return conversation;
   }

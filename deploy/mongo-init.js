@@ -1,10 +1,16 @@
 // MongoDB initialization script
+// Note: MONGO_USER and MONGO_PASSWORD are set via docker-compose environment variables
+
 db = db.getSiblingDB('sales-automation');
 
-// Create application user
+// Create application user with environment variables
+// These are passed from docker-compose.yml
+const appUser = process.env.MONGO_USER || 'sellx';
+const appPassword = process.env.MONGO_PASSWORD || 'sellxpassword';
+
 db.createUser({
-  user: 'sellx',
-  pwd: 'sellxpassword', // Change this in production!
+  user: appUser,
+  pwd: appPassword,
   roles: [
     {
       role: 'readWrite',
@@ -23,4 +29,4 @@ db.conversations.createIndex({ userId: 1, clientId: 1 });
 db.scheduledreminders.createIndex({ scheduledTime: 1, status: 1 });
 db.scheduledreminders.createIndex({ clientId: 1, status: 1 });
 
-print('Database initialized successfully');
+print('Database initialized successfully with user: ' + appUser);

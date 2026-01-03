@@ -37,6 +37,7 @@ export default function ClientDetailPage() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   const loadData = async () => {
@@ -77,7 +78,7 @@ export default function ClientDetailPage() {
     type: ConversationType;
     content: string;
     summary: string;
-    nextFollowUpDate: string;
+    nextFollowUpDate?: string;
     metadata?: {
       fileName?: string;
       fileSize?: number;
@@ -93,7 +94,7 @@ export default function ClientDetailPage() {
         type: data.type,
         content: data.content,
         summary: data.summary,
-        nextFollowUpDate: new Date(data.nextFollowUpDate).toISOString(),
+        nextFollowUpDate: data.nextFollowUpDate ? new Date(data.nextFollowUpDate).toISOString() : undefined,
         metadata: data.metadata,
       });
       
@@ -103,7 +104,7 @@ export default function ClientDetailPage() {
         setClient({
           ...client,
           lastConversationSummary: data.summary,
-          followUpDate: data.nextFollowUpDate,
+          ...(data.nextFollowUpDate && { followUpDate: data.nextFollowUpDate }),
         });
         toast.success('Suhbat qo\'shildi');
       }

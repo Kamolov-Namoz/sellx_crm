@@ -36,42 +36,37 @@ const validateRequest = (
 // Valid client statuses
 const VALID_STATUSES: ClientStatus[] = ['interested', 'thinking', 'callback', 'not_interested', 'deal_closed'];
 
-// Client creation validation
+// Client creation validation (without escape to preserve special characters)
 const createClientValidation = [
   body('fullName')
     .trim()
     .isLength({ min: 2, max: 100 })
-    .withMessage('Full name must be between 2 and 100 characters')
-    .escape(),
+    .withMessage('Full name must be between 2 and 100 characters'),
   body('phoneNumber')
     .trim()
     .notEmpty()
-    .withMessage('Phone number is required')
-    .escape(),
+    .withMessage('Phone number is required'),
   body('location')
     .trim()
     .notEmpty()
     .withMessage('Location is required')
     .isLength({ max: 200 })
-    .withMessage('Location cannot exceed 200 characters')
-    .escape(),
+    .withMessage('Location cannot exceed 200 characters'),
   body('brandName')
     .optional()
     .trim()
     .isLength({ max: 100 })
-    .withMessage('Brand name cannot exceed 100 characters')
-    .escape(),
+    .withMessage('Brand name cannot exceed 100 characters'),
   body('notes')
     .optional()
     .trim()
     .isLength({ max: 2000 })
-    .withMessage('Notes cannot exceed 2000 characters')
-    .escape(),
+    .withMessage('Notes cannot exceed 2000 characters'),
   body('status')
     .isIn(VALID_STATUSES)
     .withMessage(`Status must be one of: ${VALID_STATUSES.join(', ')}`),
   body('followUpDate')
-    .optional()
+    .optional({ values: 'null' })
     .isISO8601()
     .withMessage('Invalid date format'),
 ];
@@ -82,39 +77,38 @@ const updateClientValidation = [
     .optional()
     .trim()
     .isLength({ min: 2, max: 100 })
-    .withMessage('Full name must be between 2 and 100 characters')
-    .escape(),
+    .withMessage('Full name must be between 2 and 100 characters'),
   body('phoneNumber')
     .optional()
     .trim()
     .notEmpty()
-    .withMessage('Phone number cannot be empty')
-    .escape(),
+    .withMessage('Phone number cannot be empty'),
   body('location')
     .optional()
     .trim()
     .isLength({ max: 200 })
-    .withMessage('Location cannot exceed 200 characters')
-    .escape(),
+    .withMessage('Location cannot exceed 200 characters'),
   body('brandName')
     .optional()
     .trim()
     .isLength({ max: 100 })
-    .withMessage('Brand name cannot exceed 100 characters')
-    .escape(),
+    .withMessage('Brand name cannot exceed 100 characters'),
   body('notes')
     .optional()
     .trim()
     .isLength({ max: 2000 })
-    .withMessage('Notes cannot exceed 2000 characters')
-    .escape(),
+    .withMessage('Notes cannot exceed 2000 characters'),
   body('status')
     .optional()
     .isIn(VALID_STATUSES)
     .withMessage(`Status must be one of: ${VALID_STATUSES.join(', ')}`),
   body('followUpDate')
-    .optional()
-    .isISO8601()
+    .optional({ values: 'null' })
+    .custom((value) => {
+      if (value === null || value === '') return true;
+      const date = new Date(value);
+      return !isNaN(date.getTime());
+    })
     .withMessage('Invalid date format'),
 ];
 

@@ -1,47 +1,28 @@
 # Dependencies
 node_modules/
 
-# Build outputs
-dist/
-.next/
-out/
-
-# Environment files
-.env
-.env.local
-.env.*.local
+# Environment files with secrets (keep examples)
 !.env.example
 !.env.local.example
-!.env.production.example
+!.env.production
+
+# Firebase service account (secret)
+firebase-service-account.json
+
+# Uploads (user data)
+backend/uploads/*
+!backend/uploads/.gitkeep
 
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
 
-# OS files
+# OS
 .DS_Store
 Thumbs.db
 
 # Logs
-logs/
 *.log
-npm-debug.log*
-
-# Test coverage
-coverage/
-
-# Firebase
-firebase-service-account.json
-
-# Uploads (production data)
-backend/uploads/*
-!backend/uploads/.gitkeep
 
 # Kiro
 .kiro/
-
-# Cache
-.cache/
-*.tsbuildinfo

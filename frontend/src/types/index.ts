@@ -82,7 +82,7 @@ export interface ConversationFormData {
   type: ConversationType;
   content: string;
   summary: string;
-  nextFollowUpDate: string;
+  nextFollowUpDate?: string;
   metadata?: {
     fileName?: string;
     fileSize?: number;

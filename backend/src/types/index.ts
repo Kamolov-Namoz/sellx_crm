@@ -99,7 +99,7 @@ export interface UpdateClientRequest {
   brandName?: string;
   notes?: string;
   status?: ClientStatus;
-  followUpDate?: string;
+  followUpDate?: string | null;
 }
 
 // Conversation request types
@@ -108,7 +108,7 @@ export interface CreateConversationRequest {
   type: ConversationType;
   content: string;
   summary: string;
-  nextFollowUpDate: string;
+  nextFollowUpDate?: string;
   metadata?: {
     fileName?: string;
     fileSize?: number;

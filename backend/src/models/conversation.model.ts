@@ -53,7 +53,6 @@ const conversationSchema = new Schema<ConversationDocument>(
     },
     nextFollowUpDate: {
       type: Date,
-      required: [true, 'Next follow-up date is required'],
     },
     metadata: {
       fileName: String,

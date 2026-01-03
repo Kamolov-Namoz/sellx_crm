@@ -250,11 +250,11 @@ export default function AddConversationModal({
               </div>
 
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">Keyingi qo'ng'iroq *</label>
+                <label className="text-xs text-gray-400 mb-1 block">Keyingi qo'ng'iroq (ixtiyoriy)</label>
                 <input
                   type="datetime-local"
-                  className={`w-full bg-[#242f3d] text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500 ${errors.nextFollowUpDate ? 'ring-2 ring-red-500' : ''}`}
-                  {...register('nextFollowUpDate', { required: true })}
+                  className="w-full bg-[#242f3d] text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500"
+                  {...register('nextFollowUpDate')}
                 />
               </div>
 

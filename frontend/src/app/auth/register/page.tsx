@@ -33,6 +33,21 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!/[A-Z]/.test(password)) {
+      toast.error('Parol kamida 1 ta katta harf bo\'lishi kerak');
+      return;
+    }
+
+    if (!/[a-z]/.test(password)) {
+      toast.error('Parol kamida 1 ta kichik harf bo\'lishi kerak');
+      return;
+    }
+
+    if (!/[0-9]/.test(password)) {
+      toast.error('Parol kamida 1 ta raqam bo\'lishi kerak');
+      return;
+    }
+
     setIsLoading(true);
     try {
       await register({ username, password, confirmPassword });
