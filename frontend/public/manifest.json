@@ -1,0 +1,45 @@
+{
+  "name": "Sales Automation",
+  "short_name": "SellX",
+  "description": "Sales agent client management and follow-up reminders",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "id": "sellx-pwa",
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Yangi mijoz",
+      "short_name": "Qo'shish",
+      "description": "Yangi mijoz qo'shish",
+      "url": "/clients/new",
+      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Asosiy sahifa",
+      "url": "/dashboard",
+      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}

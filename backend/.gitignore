@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.production.example
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+
+# Firebase service account
+firebase-service-account.json
+
+# Uploads (production data)
+uploads/*
+!uploads/.gitkeep

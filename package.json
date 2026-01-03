@@ -1,0 +1,22 @@
+{
+  "name": "sales-automation-pwa",
+  "version": "1.0.0",
+  "description": "Sales agent client management and follow-up reminder system",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n \"backend,frontend\" -c \"blue,green\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "build": "npm run build --prefix backend && npm run build --prefix frontend",
+    "start": "concurrently -n \"backend,frontend\" -c \"blue,green\" \"npm start --prefix backend\" \"npm start --prefix frontend\"",
+    "install:all": "npm install && npm install --prefix backend && npm install --prefix frontend",
+    "test": "npm test --prefix backend && npm test --prefix frontend",
+    "lint": "npm run lint --prefix backend",
+    "clean": "rimraf backend/dist frontend/.next"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "rimraf": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
