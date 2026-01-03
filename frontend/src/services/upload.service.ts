@@ -33,7 +33,7 @@ export const uploadService = {
     if (path.startsWith('http')) {
       return path;
     }
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:9000';
     return `${baseUrl}${path}`;
   },
 };

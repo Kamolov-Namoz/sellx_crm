@@ -46,7 +46,7 @@ validateConfig();
 
 export const config = {
   // Server
-  port: parseInt(process.env.PORT || '5000', 10),
+  port: parseInt(process.env.PORT || '9000', 10),
   nodeEnv,
   isProduction,
 
@@ -66,7 +66,7 @@ export const config = {
   },
 
   // CORS
-  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:9001',
 };
 
 export default config;

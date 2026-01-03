@@ -83,7 +83,7 @@ else
 fi
 
 # Check Backend
-if curl -sf http://localhost:5000/health | grep -q "ok"; then
+if curl -sf http://localhost:9000/health | grep -q "ok"; then
     echo -e "${GREEN}✓ Backend is healthy${NC}"
 else
     echo -e "${RED}✗ Backend health check failed${NC}"
@@ -92,7 +92,7 @@ else
 fi
 
 # Check Frontend
-if curl -sf http://localhost:3000 > /dev/null; then
+if curl -sf http://localhost:9001 > /dev/null; then
     echo -e "${GREEN}✓ Frontend is healthy${NC}"
 else
     echo -e "${RED}✗ Frontend health check failed${NC}"
