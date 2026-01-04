@@ -1,17 +1,12 @@
 export declare const config: {
     port: number;
-    nodeEnv: any;
+    nodeEnv: string;
     isProduction: boolean;
-    mongodbUri: any;
+    mongodbUri: string;
     jwtSecret: string;
-    jwtExpiresIn: any;
-    jwtRefreshExpiresIn: any;
-    firebase: {
-        projectId: any;
-        privateKey: any;
-        clientEmail: any;
-    };
-    corsOrigin: any;
+    jwtExpiresIn: string;
+    jwtRefreshExpiresIn: string;
+    corsOrigin: string;
 };
 export default config;
 //# sourceMappingURL=index.d.ts.map

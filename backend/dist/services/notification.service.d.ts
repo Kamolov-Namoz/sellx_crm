@@ -4,56 +4,27 @@ interface FollowUpNotificationData {
 }
 export declare class NotificationService {
     /**
-     * Register FCM token for a user
+     * Register push subscription for a user (Web Push uchun)
      */
     registerToken(userId: string, token: string): Promise<void>;
     /**
-     * Remove FCM token for a user
+     * Remove push subscription for a user
      */
     removeToken(userId: string, token: string): Promise<void>;
     /**
-     * Send follow-up notification
+     * Send follow-up notification (placeholder - frontend handles this now)
      */
-    sendFollowUpNotification(userId: string, tokens: string[], data: FollowUpNotificationData): Promise<{
+    sendFollowUpNotification(userId: string, _tokens: string[], data: FollowUpNotificationData): Promise<{
         success: boolean;
-        reason: string;
-        successCount?: undefined;
-        failureCount?: undefined;
-        error?: undefined;
-    } | {
-        success: boolean;
-        successCount: any;
-        failureCount: any;
-        reason?: undefined;
-        error?: undefined;
-    } | {
-        success: boolean;
-        error: unknown;
-        reason?: undefined;
-        successCount?: undefined;
-        failureCount?: undefined;
+        message: string;
+        data: FollowUpNotificationData;
     }>;
     /**
-     * Send custom notification
+     * Send custom notification (placeholder)
      */
-    sendNotification(tokens: string[], title: string, body: string, data?: Record<string, string>): Promise<{
+    sendNotification(_tokens: string[], title: string, body: string, _data?: Record<string, string>): Promise<{
         success: boolean;
-        reason: string;
-        successCount?: undefined;
-        failureCount?: undefined;
-        error?: undefined;
-    } | {
-        success: boolean;
-        successCount: any;
-        failureCount: any;
-        reason?: undefined;
-        error?: undefined;
-    } | {
-        success: boolean;
-        error: unknown;
-        reason?: undefined;
-        successCount?: undefined;
-        failureCount?: undefined;
+        message: string;
     }>;
 }
 export declare const notificationService: NotificationService;

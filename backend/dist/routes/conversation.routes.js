@@ -31,9 +31,8 @@ const createConversationValidation = [
         .withMessage('Type must be text, audio, image, or video'),
     (0, express_validator_1.body)('content').notEmpty().withMessage('Content is required'),
     (0, express_validator_1.body)('summary')
+        .optional()
         .trim()
-        .notEmpty()
-        .withMessage('Summary is required')
         .isLength({ max: 2000 })
         .withMessage('Summary cannot exceed 2000 characters'),
     (0, express_validator_1.body)('nextFollowUpDate')

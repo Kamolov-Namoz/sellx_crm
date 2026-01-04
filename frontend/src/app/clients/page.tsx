@@ -11,7 +11,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { clientService } from '@/services/client.service';
 import { Client, ClientStatus, STATUS_LABELS } from '@/types';
 
-const STATUSES: (ClientStatus | 'all')[] = ['all', 'interested', 'thinking', 'callback', 'not_interested', 'deal_closed'];
+const STATUSES: (ClientStatus | 'all')[] = ['all', 'new', 'thinking', 'agreed', 'rejected', 'callback'];
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);

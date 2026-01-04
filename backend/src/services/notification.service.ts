@@ -33,7 +33,7 @@ export class NotificationService {
    */
   async sendFollowUpNotification(
     userId: string,
-    tokens: string[],
+    _tokens: string[],
     data: FollowUpNotificationData
   ) {
     // Web Push notification - frontend'da browser notification ishlatiladi
@@ -49,10 +49,10 @@ export class NotificationService {
    * Send custom notification (placeholder)
    */
   async sendNotification(
-    tokens: string[],
+    _tokens: string[],
     title: string,
     body: string,
-    data?: Record<string, string>
+    _data?: Record<string, string>
   ) {
     console.log(`Notification: ${title} - ${body}`);
     return { 

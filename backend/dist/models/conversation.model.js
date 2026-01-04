@@ -59,7 +59,6 @@ const conversationSchema = new mongoose_1.Schema({
     },
     summary: {
         type: String,
-        required: [true, 'Summary is required'],
         trim: true,
         maxlength: [2000, 'Summary cannot exceed 2000 characters'],
     },

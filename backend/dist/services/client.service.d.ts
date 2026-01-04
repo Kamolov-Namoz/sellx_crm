@@ -1,12 +1,17 @@
+import { Types } from 'mongoose';
 import { CreateClientRequest, UpdateClientRequest, GetClientsQuery, ClientStatus } from '../types';
 export declare class ClientService {
     /**
      * Get all clients for a user with filtering, sorting, search and pagination
      */
     getClients(userId: string, query: GetClientsQuery): Promise<{
-        data: any;
+        data: (import("mongoose").FlattenMaps<import("../models").ClientDocument> & Required<{
+            _id: Types.ObjectId;
+        }> & {
+            __v: number;
+        })[];
         meta: {
-            total: any;
+            total: number;
             page: number;
             limit: number;
             totalPages: number;
@@ -14,7 +19,7 @@ export declare class ClientService {
             filters: {
                 status: ClientStatus | null;
                 search: string | null;
-                sortBy: "createdAt" | "followUpDate" | "name";
+                sortBy: "name" | "createdAt" | "followUpDate";
                 sortOrder: "asc" | "desc";
             };
         };
@@ -23,8 +28,8 @@ export declare class ClientService {
      * Get dashboard statistics
      */
     getStats(userId: string): Promise<{
-        totalClients: any;
-        todayFollowUps: any;
+        totalClients: number;
+        todayFollowUps: number;
         byStatus: Record<string, number>;
         orders: Record<string, {
             count: number;
@@ -34,15 +39,27 @@ export declare class ClientService {
     /**
      * Get single client by ID
      */
-    getClient(userId: string, clientId: string): Promise<any>;
+    getClient(userId: string, clientId: string): Promise<import("mongoose").FlattenMaps<import("../models").ClientDocument> & Required<{
+        _id: Types.ObjectId;
+    }> & {
+        __v: number;
+    }>;
     /**
      * Create new client
      */
-    createClient(userId: string, data: CreateClientRequest): Promise<any>;
+    createClient(userId: string, data: CreateClientRequest): Promise<import("../models").ClientDocument & Required<{
+        _id: Types.ObjectId;
+    }> & {
+        __v: number;
+    }>;
     /**
      * Update client
      */
-    updateClient(userId: string, clientId: string, data: UpdateClientRequest): Promise<any>;
+    updateClient(userId: string, clientId: string, data: UpdateClientRequest): Promise<import("../models").ClientDocument & Required<{
+        _id: Types.ObjectId;
+    }> & {
+        __v: number;
+    }>;
     /**
      * Delete client and associated reminders, conversations, and orders
      */

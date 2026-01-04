@@ -85,7 +85,6 @@ export default function ClientDetailPage() {
   const handleAddConversation = async (data: {
     type: ConversationType;
     content: string;
-    summary: string;
     nextFollowUpDate?: string;
     metadata?: { fileName?: string; fileSize?: number; mimeType?: string };
   }) => {
@@ -93,11 +92,14 @@ export default function ClientDetailPage() {
     
     setIsSubmitting(true);
     try {
+      // Generate summary from content (first 100 chars)
+      const summary = data.content.length > 100 ? data.content.substring(0, 100) + '...' : data.content;
+      
       const response = await conversationService.createConversation({
         clientId: client._id,
         type: data.type,
         content: data.content,
-        summary: data.summary,
+        summary: summary,
         nextFollowUpDate: data.nextFollowUpDate ? new Date(data.nextFollowUpDate).toISOString() : undefined,
         metadata: data.metadata,
       });
@@ -106,7 +108,7 @@ export default function ClientDetailPage() {
         setConversations([...conversations, response.data]);
         setClient({
           ...client,
-          lastConversationSummary: data.summary,
+          lastConversationSummary: summary,
           ...(data.nextFollowUpDate && { followUpDate: data.nextFollowUpDate }),
         });
         toast.success('Suhbat qo\'shildi');

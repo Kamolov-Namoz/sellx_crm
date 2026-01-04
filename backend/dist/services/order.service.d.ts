@@ -1,16 +1,25 @@
+import mongoose from 'mongoose';
 import { CreateOrderRequest, UpdateOrderRequest, GetOrdersQuery, OrderStatus } from '../types';
 export declare class OrderService {
     /**
      * Create a new order
      */
-    createOrder(userId: string, data: CreateOrderRequest): Promise<any>;
+    createOrder(userId: string, data: CreateOrderRequest): Promise<import("../models").OrderDocument & Required<{
+        _id: mongoose.Types.ObjectId;
+    }> & {
+        __v: number;
+    }>;
     /**
      * Get orders for a user with filters
      */
     getOrders(userId: string, query: GetOrdersQuery): Promise<{
-        orders: any;
+        orders: (mongoose.FlattenMaps<import("../models").OrderDocument> & Required<{
+            _id: mongoose.Types.ObjectId;
+        }> & {
+            __v: number;
+        })[];
         meta: {
-            total: any;
+            total: number;
             page: number;
             limit: number;
             totalPages: number;
@@ -19,11 +28,19 @@ export declare class OrderService {
     /**
      * Get single order by ID
      */
-    getOrderById(userId: string, orderId: string): Promise<any>;
+    getOrderById(userId: string, orderId: string): Promise<mongoose.FlattenMaps<import("../models").OrderDocument> & Required<{
+        _id: mongoose.Types.ObjectId;
+    }> & {
+        __v: number;
+    }>;
     /**
      * Update order
      */
-    updateOrder(userId: string, orderId: string, data: UpdateOrderRequest): Promise<any>;
+    updateOrder(userId: string, orderId: string, data: UpdateOrderRequest): Promise<mongoose.FlattenMaps<import("../models").OrderDocument> & Required<{
+        _id: mongoose.Types.ObjectId;
+    }> & {
+        __v: number;
+    }>;
     /**
      * Delete order
      */
@@ -43,9 +60,13 @@ export declare class OrderService {
     getAllOrders(query: GetOrdersQuery & {
         userId?: string;
     }): Promise<{
-        orders: any;
+        orders: (mongoose.FlattenMaps<import("../models").OrderDocument> & Required<{
+            _id: mongoose.Types.ObjectId;
+        }> & {
+            __v: number;
+        })[];
         meta: {
-            total: any;
+            total: number;
             page: number;
             limit: number;
             totalPages: number;
