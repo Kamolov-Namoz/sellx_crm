@@ -6,6 +6,24 @@ export const connectDatabase = async (): Promise<void> => {
     await mongoose.connect(config.mongodbUri);
     console.warn('MongoDB connected successfully');
 
+    // Drop old email index if exists (legacy cleanup)
+    try {
+      const db = mongoose.connection.db;
+      if (db) {
+        const collections = await db.listCollections({ name: 'users' }).toArray();
+        if (collections.length > 0) {
+          const indexes = await db.collection('users').indexes();
+          const emailIndex = indexes.find((idx: { name?: string }) => idx.name === 'email_1');
+          if (emailIndex) {
+            await db.collection('users').dropIndex('email_1');
+            console.warn('Dropped legacy email_1 index');
+          }
+        }
+      }
+    } catch {
+      // Index doesn't exist or already dropped - ignore
+    }
+
     mongoose.connection.on('error', (error) => {
       console.error('MongoDB connection error:', error);
     });

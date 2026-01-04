@@ -84,9 +84,12 @@ router.post(
   async (req: Request<object, object, LoginRequest>, res: Response, next: NextFunction) => {
     try {
       const { username, password } = req.body;
+      console.log('Login attempt:', { username, passwordLength: password?.length });
       const result = await authService.login(username, password);
+      console.log('Login success:', username);
       res.json(result);
     } catch (error) {
+      console.log('Login failed:', username, error instanceof Error ? error.message : 'Unknown error');
       next(error);
     }
   }

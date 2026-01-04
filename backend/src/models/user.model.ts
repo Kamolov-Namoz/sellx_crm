@@ -27,7 +27,6 @@ const userSchema = new Schema<UserDocument>(
   }
 );
 
-// Index for fast username lookups
-userSchema.index({ username: 1 }, { unique: true });
+// Note: username index is already created by 'unique: true' option
 
 export const User = mongoose.model<UserDocument>('User', userSchema);

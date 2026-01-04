@@ -40,7 +40,6 @@ const reminderSchema = new Schema<ReminderDocument>(
 // Index for scheduler queries - find pending reminders due now
 reminderSchema.index({ scheduledTime: 1, status: 1 });
 
-// Index for finding reminders by client (for cascade delete)
-reminderSchema.index({ clientId: 1 });
+// Note: clientId index is already created by 'index: true' option in schema
 
 export const ScheduledReminder = mongoose.model<ReminderDocument>('ScheduledReminder', reminderSchema);

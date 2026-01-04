@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import path from 'path';
+import mongoose from 'mongoose';
 import { config } from './config';
 import { connectDatabase, disconnectDatabase } from './database/connection';
 import authRoutes from './routes/auth.routes';
@@ -53,22 +54,21 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
 }));
 
 // Health check with database status
-app.get('/health', async (_req, res) => {
-  try {
-    const mongoose = await import('mongoose');
-    const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-    
+app.get('/health', (_req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  
+  if (dbStatus === 'connected') {
     res.json({ 
       status: 'ok', 
       timestamp: new Date().toISOString(),
       database: dbStatus,
       environment: config.nodeEnv,
     });
-  } catch {
+  } else {
     res.status(503).json({ 
       status: 'error', 
       timestamp: new Date().toISOString(),
-      database: 'error',
+      database: dbStatus,
     });
   }
 });

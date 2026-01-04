@@ -1,5 +1,4 @@
 # Environment with secrets
-.env
 !.env.example
 
 # SSL certificates
