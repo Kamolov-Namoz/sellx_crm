@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # MongoDB Database
   mongodb:
-    image: mongo:7
+    image: mongo:4.4
     container_name: sellx-mongodb
     restart: unless-stopped
     environment:
@@ -18,7 +18,7 @@ services:
     networks:
       - sellx-network
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      test: echo 'db.runCommand("ping").ok' | mongo localhost:27017/test --quiet
       interval: 10s
       timeout: 5s
       retries: 5
