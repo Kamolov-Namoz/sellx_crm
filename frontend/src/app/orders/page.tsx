@@ -30,7 +30,7 @@ export default function OrdersPage() {
         setOrders(response.data);
       }
     } catch (error) {
-      toast.error('Zakazlarni yuklashda xatolik');
+      toast.error('Loyihalarni yuklashda xatolik');
     } finally {
       setIsLoading(false);
     }
@@ -40,20 +40,14 @@ export default function OrdersPage() {
     fetchOrders();
   }, [filter]);
 
-  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
-    try {
-      await orderService.updateOrder(orderId, { status: newStatus });
-      toast.success('Status yangilandi');
-      fetchOrders();
-    } catch {
-      toast.error('Statusni yangilashda xatolik');
-    }
+  const handleProjectClick = (orderId: string) => {
+    router.push(`/orders/${orderId}`);
   };
 
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-[#0e1621] pb-20">
-        <Header title="Zakazlar" />
+        <Header title="Loyihalar" />
         
         <main className="p-4">
           {/* Filter */}
@@ -87,17 +81,21 @@ export default function OrdersPage() {
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-dark-700 rounded-full mx-auto mb-4 flex items-center justify-center">
                 <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                 </svg>
               </div>
-              <p className="text-gray-500">Zakazlar topilmadi</p>
+              <p className="text-gray-500">Loyihalar topilmadi</p>
             </div>
           ) : (
             <div className="space-y-3">
               {orders.map((order) => (
-                <div key={order._id} className="bg-dark-800 rounded-xl p-4">
+                <div 
+                  key={order._id} 
+                  className="bg-dark-800 rounded-xl p-4 cursor-pointer hover:bg-dark-700 transition-colors"
+                  onClick={() => handleProjectClick(order._id)}
+                >
                   <div className="flex items-start justify-between mb-2">
-                    <div>
+                    <div className="flex-1">
                       <h3 className="font-semibold text-white">{order.title}</h3>
                       {typeof order.clientId === 'object' && (
                         <p className="text-sm text-gray-500">
@@ -112,24 +110,27 @@ export default function OrdersPage() {
                     )}
                   </div>
                   
-                  {order.description && (
-                    <p className="text-sm text-gray-400 mb-3">{order.description}</p>
-                  )}
+                  {/* Progress bar */}
+                  <div className="mb-3">
+                    <div className="flex justify-between text-xs text-gray-500 mb-1">
+                      <span>Progress</span>
+                      <span>{(order as Order & { progress?: number }).progress || 0}%</span>
+                    </div>
+                    <div className="w-full bg-dark-700 rounded-full h-2">
+                      <div 
+                        className="bg-primary-500 h-2 rounded-full transition-all"
+                        style={{ width: `${(order as Order & { progress?: number }).progress || 0}%` }}
+                      />
+                    </div>
+                  </div>
                   
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-600">
-                      {format(new Date(order.createdAt), 'dd.MM.yyyy HH:mm')}
+                      {format(new Date(order.createdAt), 'dd.MM.yyyy')}
                     </span>
-                    
-                    <select
-                      value={order.status}
-                      onChange={(e) => handleStatusChange(order._id, e.target.value as OrderStatus)}
-                      className={`text-xs px-3 py-1 rounded-lg font-medium border-0 ${ORDER_STATUS_COLORS[order.status]}`}
-                    >
-                      <option value="new">Yangi</option>
-                      <option value="in_progress">Jarayonda</option>
-                      <option value="completed">Tugallangan</option>
-                    </select>
+                    <span className={`text-xs px-2 py-1 rounded ${ORDER_STATUS_COLORS[order.status]}`}>
+                      {ORDER_STATUS_LABELS[order.status]}
+                    </span>
                   </div>
                 </div>
               ))}

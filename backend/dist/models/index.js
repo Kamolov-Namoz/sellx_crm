@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Conversation = exports.ScheduledReminder = exports.Order = exports.Client = exports.User = void 0;
+exports.ProjectTask = exports.Employee = exports.Conversation = exports.ScheduledReminder = exports.Order = exports.Client = exports.User = void 0;
 var user_model_1 = require("./user.model");
 Object.defineProperty(exports, "User", { enumerable: true, get: function () { return user_model_1.User; } });
 var client_model_1 = require("./client.model");
@@ -11,4 +11,8 @@ var reminder_model_1 = require("./reminder.model");
 Object.defineProperty(exports, "ScheduledReminder", { enumerable: true, get: function () { return reminder_model_1.ScheduledReminder; } });
 var conversation_model_1 = require("./conversation.model");
 Object.defineProperty(exports, "Conversation", { enumerable: true, get: function () { return conversation_model_1.Conversation; } });
+var employee_model_1 = require("./employee.model");
+Object.defineProperty(exports, "Employee", { enumerable: true, get: function () { return employee_model_1.Employee; } });
+var projectTask_model_1 = require("./projectTask.model");
+Object.defineProperty(exports, "ProjectTask", { enumerable: true, get: function () { return projectTask_model_1.ProjectTask; } });
 //# sourceMappingURL=index.js.map

@@ -36,6 +36,7 @@ export interface IOrder {
   description?: string;
   amount?: number;
   status: OrderStatus;
+  progress: number;
   createdAt: Date;
   updatedAt: Date;
 }

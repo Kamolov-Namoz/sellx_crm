@@ -25,7 +25,7 @@ export default function OrderForm({ clientId, onSuccess, onCancel }: OrderFormPr
     e.preventDefault();
     
     if (!title.trim()) {
-      toast.error('Zakaz nomini kiriting');
+      toast.error('Loyiha nomini kiriting');
       return;
     }
 
@@ -38,10 +38,10 @@ export default function OrderForm({ clientId, onSuccess, onCancel }: OrderFormPr
         amount: amount ? parseFloat(amount) : undefined,
         status,
       });
-      toast.success('Zakaz qo\'shildi');
+      toast.success('Loyiha qo\'shildi');
       onSuccess();
     } catch {
-      toast.error('Zakaz qo\'shishda xatolik');
+      toast.error('Loyiha qo\'shishda xatolik');
     } finally {
       setIsSubmitting(false);
     }
@@ -51,7 +51,7 @@ export default function OrderForm({ clientId, onSuccess, onCancel }: OrderFormPr
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div className="bg-dark-800 rounded-xl w-full max-w-md">
         <div className="flex items-center justify-between p-4 border-b border-dark-700">
-          <h2 className="text-lg font-semibold text-white">Yangi zakaz</h2>
+          <h2 className="text-lg font-semibold text-white">Yangi loyiha</h2>
           <button onClick={onCancel} className="p-2 text-gray-400 hover:text-white">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -61,12 +61,12 @@ export default function OrderForm({ clientId, onSuccess, onCancel }: OrderFormPr
 
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div>
-            <label className="label">Zakaz nomi *</label>
+            <label className="label">Loyiha nomi *</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Masalan: 10 dona mahsulot"
+              placeholder="Masalan: Veb-sayt yaratish"
               className="input"
             />
           </div>

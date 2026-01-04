@@ -73,6 +73,12 @@ const orderSchema = new mongoose_1.Schema({
         },
         default: 'new',
     },
+    progress: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 100,
+    },
 }, {
     timestamps: true,
 });

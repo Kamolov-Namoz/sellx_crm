@@ -4,8 +4,8 @@ export type UserRole = 'admin' | 'user';
 // Client status type
 export type ClientStatus = 'new' | 'thinking' | 'agreed' | 'rejected' | 'callback';
 
-// Order status type
-export type OrderStatus = 'new' | 'in_progress' | 'completed';
+// Project status type (Loyiha)
+export type ProjectStatus = 'new' | 'in_progress' | 'completed';
 
 // Conversation type
 export type ConversationType = 'text' | 'audio' | 'image' | 'video';
@@ -43,18 +43,23 @@ export interface Client {
   updatedAt: string;
 }
 
-// Order type
-export interface Order {
+// Project type (Loyiha)
+export interface Project {
   _id: string;
   userId: string;
   clientId: string | Client;
   title: string;
   description?: string;
   amount?: number;
-  status: OrderStatus;
+  status: ProjectStatus;
+  progress?: number;
   createdAt: string;
   updatedAt: string;
 }
+
+// Order type - alias for backward compatibility
+export type Order = Project;
+export type OrderStatus = ProjectStatus;
 
 // Conversation type
 export interface Conversation {
@@ -110,14 +115,17 @@ export interface ClientFormData {
   followUpDate?: string;
 }
 
-// Order form data
-export interface OrderFormData {
+// Project form data (Loyiha)
+export interface ProjectFormData {
   clientId: string;
   title: string;
   description?: string;
   amount?: number;
-  status?: OrderStatus;
+  status?: ProjectStatus;
 }
+
+// Order form data - alias for backward compatibility
+export type OrderFormData = ProjectFormData;
 
 // Conversation form data
 export interface ConversationFormData {
@@ -175,19 +183,23 @@ export const STATUS_LABELS: Record<ClientStatus, string> = {
   callback: 'Keyinroq bog\'lanish',
 };
 
-// Order status colors
-export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
+// Project status colors (Loyiha)
+export const PROJECT_STATUS_COLORS: Record<ProjectStatus, string> = {
   new: 'bg-blue-100 text-blue-800',
   in_progress: 'bg-yellow-100 text-yellow-800',
   completed: 'bg-green-100 text-green-800',
 };
 
-// Order status labels (Uzbek)
-export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+// Project status labels (Uzbek)
+export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
   new: 'Yangi',
   in_progress: 'Jarayonda',
   completed: 'Tugallangan',
 };
+
+// Aliases for backward compatibility
+export const ORDER_STATUS_COLORS = PROJECT_STATUS_COLORS;
+export const ORDER_STATUS_LABELS = PROJECT_STATUS_LABELS;
 
 // Conversation type labels
 export const CONVERSATION_TYPE_LABELS: Record<ConversationType, string> = {
@@ -196,3 +208,25 @@ export const CONVERSATION_TYPE_LABELS: Record<ConversationType, string> = {
   image: 'Rasm',
   video: 'Video',
 };
+
+// Employee type (Xodim)
+export interface Employee {
+  _id: string;
+  userId: string;
+  fullName: string;
+  position: string;
+  phoneNumber?: string;
+  email?: string;
+  avatar?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Employee form data
+export interface EmployeeFormData {
+  fullName: string;
+  position: string;
+  phoneNumber?: string;
+  email?: string;
+}

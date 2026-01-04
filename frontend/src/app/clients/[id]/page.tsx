@@ -204,11 +204,11 @@ export default function ClientDetailPage() {
             <div className="p-4"><ClientDetailSkeleton /></div>
           ) : client ? (
             <div className="min-h-full p-4 pb-20" style={{ backgroundColor: '#0e1621' }}>
-              {/* Orders */}
+              {/* Projects */}
               {orders.length > 0 && (
                 <div className="mb-4 bg-[#182533] rounded-lg p-3">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs text-gray-400">📦 Zakazlar ({orders.length})</p>
+                    <p className="text-xs text-gray-400">📋 Loyihalar ({orders.length})</p>
                     <button onClick={() => setShowOrderForm(true)} className="text-xs text-primary-400">+ Qo'shish</button>
                   </div>
                   <div className="space-y-2">
@@ -232,7 +232,7 @@ export default function ClientDetailPage() {
             <div className="flex items-center gap-2 p-2">
               <button onClick={() => setShowOrderForm(true)} className="p-2.5 rounded-full hover:bg-gray-700">
                 <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                 </svg>
               </button>
               <div onClick={() => setShowAddModal(true)} className="flex-1 bg-[#242f3d] rounded-2xl px-4 py-3 cursor-pointer">
