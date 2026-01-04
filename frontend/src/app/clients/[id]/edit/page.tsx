@@ -116,7 +116,7 @@ export default function EditClientPage() {
                     fullName: client.fullName,
                     phoneNumber: client.phoneNumber,
                     location: client.location,
-                    brandName: client.brandName,
+                    companyName: client.companyName,
                     notes: client.notes,
                     status: client.status,
                     followUpDate: client.followUpDate,
