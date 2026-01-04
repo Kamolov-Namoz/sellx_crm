@@ -1,11 +1,11 @@
-import { Conversation, ConversationDocument } from '../models/conversation.model';
+import { Conversation, ConversationDocument, IConversation } from '../models/conversation.model';
 import { Client } from '../models/client.model';
 import { ScheduledReminder } from '../models/reminder.model';
 import { AppError } from '../middleware/error.middleware';
 import { CreateConversationRequest } from '../types';
 
 class ConversationService {
-  async getConversations(userId: string, clientId: string): Promise<ConversationDocument[]> {
+  async getConversations(userId: string, clientId: string): Promise<IConversation[]> {
     // Verify client belongs to user
     const client = await Client.findOne({ _id: clientId, userId });
     if (!client) {
@@ -16,7 +16,7 @@ class ConversationService {
       .sort({ createdAt: -1 })
       .lean();
     
-    return conversations as ConversationDocument[];
+    return conversations as IConversation[];
   }
 
   async createConversation(
