@@ -18,9 +18,9 @@ class ClientService {
         if (query.search) {
             filter.$or = [
                 { fullName: { $regex: query.search, $options: 'i' } },
+                { companyName: { $regex: query.search, $options: 'i' } },
                 { phoneNumber: { $regex: query.search, $options: 'i' } },
-                { location: { $regex: query.search, $options: 'i' } },
-                { brandName: { $regex: query.search, $options: 'i' } },
+                { 'location.address': { $regex: query.search, $options: 'i' } },
             ];
         }
         // Build sort options
@@ -69,7 +69,7 @@ class ClientService {
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        const [totalClients, todayFollowUps, statusCounts] = await Promise.all([
+        const [totalClients, todayFollowUps, statusCounts, orderStats] = await Promise.all([
             models_1.Client.countDocuments({ userId: userObjectId }),
             models_1.Client.countDocuments({
                 userId: userObjectId,
@@ -79,15 +79,24 @@ class ClientService {
                 { $match: { userId: userObjectId } },
                 { $group: { _id: '$status', count: { $sum: 1 } } },
             ]),
+            models_1.Order.aggregate([
+                { $match: { userId: userObjectId } },
+                { $group: { _id: '$status', count: { $sum: 1 }, totalAmount: { $sum: { $ifNull: ['$amount', 0] } } } },
+            ]),
         ]);
         const statusMap = {};
         statusCounts.forEach((s) => {
             statusMap[s._id] = s.count;
         });
+        const orderStatusMap = {};
+        orderStats.forEach((s) => {
+            orderStatusMap[s._id] = { count: s.count, totalAmount: s.totalAmount };
+        });
         return {
             totalClients,
             todayFollowUps,
             byStatus: statusMap,
+            orders: orderStatusMap,
         };
     }
     /**
@@ -110,11 +119,11 @@ class ClientService {
         const client = await models_1.Client.create({
             userId: new mongoose_1.Types.ObjectId(userId),
             fullName: data.fullName,
+            companyName: data.companyName,
             phoneNumber: data.phoneNumber,
             location: data.location,
-            brandName: data.brandName,
             notes: data.notes,
-            status: data.status,
+            status: data.status || 'new',
             followUpDate: data.followUpDate ? new Date(data.followUpDate) : undefined,
         });
         // Create reminder if follow-up date is set
@@ -142,13 +151,13 @@ class ClientService {
         }
         // Update fields
         if (data.fullName !== undefined)
-            client.fullName = data.fullName;
+            client.fullName = data.fullName || undefined;
+        if (data.companyName !== undefined)
+            client.companyName = data.companyName || undefined;
         if (data.phoneNumber !== undefined)
             client.phoneNumber = data.phoneNumber;
         if (data.location !== undefined)
             client.location = data.location;
-        if (data.brandName !== undefined)
-            client.brandName = data.brandName || undefined;
         if (data.notes !== undefined)
             client.notes = data.notes || undefined;
         if (data.status !== undefined)
@@ -169,7 +178,7 @@ class ClientService {
         return client.toObject();
     }
     /**
-     * Delete client and associated reminders and conversations
+     * Delete client and associated reminders, conversations, and orders
      */
     async deleteClient(userId, clientId) {
         const client = await models_1.Client.findOne({
@@ -184,6 +193,8 @@ class ClientService {
         await models_1.ScheduledReminder.deleteMany({ clientId: clientObjectId });
         // Delete associated conversations
         await models_1.Conversation.deleteMany({ clientId: clientObjectId });
+        // Delete associated orders
+        await models_1.Order.deleteMany({ clientId: clientObjectId });
         // Delete client
         await models_1.Client.deleteOne({ _id: client._id });
         return { success: true, message: 'Client deleted successfully' };

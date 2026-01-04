@@ -42,20 +42,30 @@ class AuthService {
     /**
      * Register a new user
      */
-    async register(username, password) {
+    async register(data) {
+        const { firstName, lastName, username, phoneNumber, password } = data;
         // Validate password strength on backend
         this.validatePassword(password);
         // Check if username already exists
-        const existingUser = await models_1.User.findOne({ username });
+        const existingUser = await models_1.User.findOne({
+            $or: [{ username }, { phoneNumber }]
+        });
         if (existingUser) {
-            throw new error_middleware_1.AppError('Username already exists', 409, 'DUPLICATE_RESOURCE');
+            if (existingUser.username === username) {
+                throw new error_middleware_1.AppError('Username already exists', 409, 'DUPLICATE_USERNAME');
+            }
+            throw new error_middleware_1.AppError('Phone number already exists', 409, 'DUPLICATE_PHONE');
         }
         // Hash password with bcrypt
         const passwordHash = await bcrypt_1.default.hash(password, SALT_ROUNDS);
         // Create user
         const user = await models_1.User.create({
+            firstName,
+            lastName,
             username,
+            phoneNumber,
             passwordHash,
+            role: 'user',
             fcmTokens: [],
         });
         return {
@@ -82,6 +92,7 @@ class AuthService {
         const payload = {
             userId: user._id.toString(),
             username: user.username,
+            role: user.role,
         };
         const token = jsonwebtoken_1.default.sign(payload, config_1.config.jwtSecret, {
             expiresIn: config_1.config.jwtExpiresIn,
@@ -93,6 +104,7 @@ class AuthService {
             token,
             expiresIn,
             userId: user._id.toString(),
+            role: user.role,
         };
     }
     /**

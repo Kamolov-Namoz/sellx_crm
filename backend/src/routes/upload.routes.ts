@@ -24,7 +24,7 @@ router.post(
         return;
       }
 
-      const fileUrl = getFileUrl(req.file.filename);
+      const fileUrl = getFileUrl(req.file.filename, req.file.mimetype);
 
       res.json({
         success: true,

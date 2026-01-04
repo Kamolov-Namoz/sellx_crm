@@ -18,7 +18,7 @@ router.post('/', upload_service_1.upload.single('file'), async (req, res, next) 
             });
             return;
         }
-        const fileUrl = (0, upload_service_1.getFileUrl)(req.file.filename);
+        const fileUrl = (0, upload_service_1.getFileUrl)(req.file.filename, req.file.mimetype);
         res.json({
             success: true,
             data: {

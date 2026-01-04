@@ -10,6 +10,8 @@ import clientRoutes from './routes/client.routes';
 import conversationRoutes from './routes/conversation.routes';
 import notificationRoutes from './routes/notification.routes';
 import uploadRoutes from './routes/upload.routes';
+import orderRoutes from './routes/order.routes';
+import adminRoutes from './routes/admin.routes';
 import { errorHandler } from './middleware/error.middleware';
 import { schedulerService } from './services/scheduler.service';
 
@@ -79,6 +81,8 @@ app.use('/api/clients', clientRoutes);
 app.use('/api/conversations', conversationRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 handler
 app.use((_req, res) => {

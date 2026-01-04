@@ -30,6 +30,7 @@ export const authMiddleware = (
     req.user = {
       userId: decoded.userId,
       username: decoded.username,
+      role: decoded.role || 'user',
     };
 
     next();

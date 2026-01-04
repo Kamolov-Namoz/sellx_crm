@@ -8,8 +8,8 @@ export interface IConversation {
   userId: Types.ObjectId;
   type: ConversationType;
   content: string; // Text content or file URL
-  summary: string; // Required summary/note
-  nextFollowUpDate: Date;
+  summary?: string; // Optional summary/note
+  nextFollowUpDate?: Date;
   metadata?: {
     fileName?: string;
     fileSize?: number;
@@ -47,7 +47,6 @@ const conversationSchema = new Schema<ConversationDocument>(
     },
     summary: {
       type: String,
-      required: [true, 'Summary is required'],
       trim: true,
       maxlength: [2000, 'Summary cannot exceed 2000 characters'],
     },

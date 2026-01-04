@@ -1,13 +1,8 @@
-import { Types } from 'mongoose';
 export declare class ReminderService {
     /**
      * Create a reminder for a client
      */
-    createReminder(userId: string, clientId: string, scheduledTime: Date): Promise<import("../models").ReminderDocument & Required<{
-        _id: Types.ObjectId;
-    }> & {
-        __v: number;
-    }>;
+    createReminder(userId: string, clientId: string, scheduledTime: Date): Promise<any>;
     /**
      * Cancel all pending reminders for a client
      */
@@ -15,31 +10,23 @@ export declare class ReminderService {
     /**
      * Update reminder time for a client
      */
-    updateReminder(clientId: string, newScheduledTime: Date): Promise<(import("../models").ReminderDocument & Required<{
-        _id: Types.ObjectId;
-    }> & {
-        __v: number;
-    }) | null>;
+    updateReminder(clientId: string, newScheduledTime: Date): Promise<any>;
     /**
      * Get pending reminders that are due (with limit for performance)
      */
-    getDueReminders(limit?: number): Promise<(import("mongoose").FlattenMaps<import("../models").ReminderDocument> & Required<{
-        _id: Types.ObjectId;
-    }> & {
-        __v: number;
-    })[]>;
+    getDueReminders(limit?: number): Promise<any>;
     /**
      * Process due reminders - send notifications (batch processing)
      */
     processDueReminders(): Promise<{
-        processed: number;
-        failed: number;
-        total: number;
+        processed: any;
+        failed: any;
+        total: any;
     }>;
     /**
      * Get reminder count for a user
      */
-    getPendingReminderCount(userId: string): Promise<number>;
+    getPendingReminderCount(userId: string): Promise<any>;
 }
 export declare const reminderService: ReminderService;
 //# sourceMappingURL=reminder.service.d.ts.map

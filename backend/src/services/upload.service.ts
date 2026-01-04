@@ -3,27 +3,40 @@ import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 
-// Ensure uploads directory exists
+// Base uploads directory
 const uploadsDir = path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+
+// Create subdirectories for different media types
+const mediaFolders = ['images', 'videos', 'audios'];
+mediaFolders.forEach((folder) => {
+  const folderPath = path.join(uploadsDir, folder);
+  if (!fs.existsSync(folderPath)) {
+    fs.mkdirSync(folderPath, { recursive: true });
+  }
+});
 
 // Sanitize filename to prevent path traversal
 const sanitizeFilename = (filename: string): string => {
-  // Remove path separators and null bytes
   return filename.replace(/[/\\:\0]/g, '_').replace(/\.\./g, '_');
+};
+
+// Get folder based on mime type
+const getMediaFolder = (mimeType: string): string => {
+  if (mimeType.startsWith('image/')) return 'images';
+  if (mimeType.startsWith('video/')) return 'videos';
+  if (mimeType.startsWith('audio/')) return 'audios';
+  return 'images'; // default
 };
 
 // Configure storage
 const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadsDir);
+  destination: (_req, file, cb) => {
+    const folder = getMediaFolder(file.mimetype);
+    cb(null, path.join(uploadsDir, folder));
   },
   filename: (_req, file, cb) => {
     const sanitizedOriginal = sanitizeFilename(file.originalname);
     const ext = path.extname(sanitizedOriginal).toLowerCase();
-    // Only allow specific extensions
     const allowedExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp3', '.wav', '.ogg', '.webm', '.m4a', '.mp4', '.mov'];
     const safeExt = allowedExts.includes(ext) ? ext : '';
     const filename = `${uuidv4()}${safeExt}`;
@@ -69,15 +82,16 @@ export const upload = multer({
   },
 });
 
-// Get file URL
-export const getFileUrl = (filename: string): string => {
-  return `/uploads/${filename}`;
+// Get file URL with folder
+export const getFileUrl = (filename: string, mimeType: string): string => {
+  const folder = getMediaFolder(mimeType);
+  return `/uploads/${folder}/${filename}`;
 };
 
 // Delete file
-export const deleteFile = (filename: string): void => {
-  const filepath = path.join(uploadsDir, filename);
-  if (fs.existsSync(filepath)) {
-    fs.unlinkSync(filepath);
+export const deleteFile = (filePath: string): void => {
+  const fullPath = path.join(process.cwd(), filePath.replace(/^\//, ''));
+  if (fs.existsSync(fullPath)) {
+    fs.unlinkSync(fullPath);
   }
 };

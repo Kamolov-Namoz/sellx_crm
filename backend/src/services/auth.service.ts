@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import { User } from '../models';
-import { AuthResponse, JwtPayload } from '../types';
+import { AuthResponse, JwtPayload, RegisterRequest } from '../types';
 import { AppError } from '../middleware/error.middleware';
 
 const SALT_ROUNDS = 12;
@@ -43,14 +43,21 @@ export class AuthService {
   /**
    * Register a new user
    */
-  async register(username: string, password: string): Promise<AuthResponse> {
+  async register(data: RegisterRequest): Promise<AuthResponse> {
+    const { firstName, lastName, username, phoneNumber, password } = data;
+
     // Validate password strength on backend
     this.validatePassword(password);
 
     // Check if username already exists
-    const existingUser = await User.findOne({ username });
+    const existingUser = await User.findOne({ 
+      $or: [{ username }, { phoneNumber }] 
+    });
     if (existingUser) {
-      throw new AppError('Username already exists', 409, 'DUPLICATE_RESOURCE');
+      if (existingUser.username === username) {
+        throw new AppError('Username already exists', 409, 'DUPLICATE_USERNAME');
+      }
+      throw new AppError('Phone number already exists', 409, 'DUPLICATE_PHONE');
     }
 
     // Hash password with bcrypt
@@ -58,8 +65,12 @@ export class AuthService {
 
     // Create user
     const user = await User.create({
+      firstName,
+      lastName,
       username,
+      phoneNumber,
       passwordHash,
+      role: 'user',
       fcmTokens: [],
     });
 
@@ -90,6 +101,7 @@ export class AuthService {
     const payload: JwtPayload = {
       userId: user._id.toString(),
       username: user.username,
+      role: user.role,
     };
 
     const token = jwt.sign(payload, config.jwtSecret, {
@@ -104,6 +116,7 @@ export class AuthService {
       token,
       expiresIn,
       userId: user._id.toString(),
+      role: user.role,
     };
   }
 

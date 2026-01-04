@@ -6,6 +6,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 import ClientForm from '@/components/ClientForm';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { useToast } from '@/contexts/ToastContext';
 import { clientService } from '@/services/client.service';
 import { Client, ClientFormData } from '@/types';
@@ -16,6 +17,8 @@ export default function EditClientPage() {
   const [client, setClient] = useState<Client | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
@@ -57,6 +60,27 @@ export default function EditClientPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!client) return;
+    
+    setIsDeleting(true);
+    try {
+      await clientService.deleteClient(client._id);
+      toast.success('Mijoz o\'chirildi');
+      router.push('/clients');
+    } catch (error) {
+      toast.error('O\'chirishda xatolik yuz berdi');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
+
+  const getDisplayName = () => {
+    if (!client) return '';
+    return client.fullName || client.companyName || client.phoneNumber;
+  };
+
   return (
     <ProtectedRoute>
       <div className="page-container pb-20">
@@ -86,26 +110,50 @@ export default function EditClientPage() {
                 ))}
               </div>
             ) : client ? (
-              <ClientForm
-                initialData={{
-                  fullName: client.fullName,
-                  phoneNumber: client.phoneNumber,
-                  location: client.location,
-                  brandName: client.brandName,
-                  notes: client.notes,
-                  status: client.status,
-                  followUpDate: client.followUpDate,
-                }}
-                onSubmit={handleSubmit}
-                isSubmitting={isSubmitting}
-                submitLabel="Saqlash"
-                autoDetectLocation={false}
-              />
+              <>
+                <ClientForm
+                  initialData={{
+                    fullName: client.fullName,
+                    phoneNumber: client.phoneNumber,
+                    location: client.location,
+                    brandName: client.brandName,
+                    notes: client.notes,
+                    status: client.status,
+                    followUpDate: client.followUpDate,
+                  }}
+                  onSubmit={handleSubmit}
+                  isSubmitting={isSubmitting}
+                  submitLabel="Saqlash"
+                  autoDetectLocation={false}
+                />
+                
+                {/* Delete button */}
+                <div className="mt-8 pt-6 border-t border-gray-700">
+                  <button
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="w-full py-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-colors"
+                  >
+                    Mijozni o'chirish
+                  </button>
+                </div>
+              </>
             ) : null}
           </div>
         </main>
 
         <BottomNav />
+
+        <ConfirmDialog
+          isOpen={showDeleteDialog}
+          title="Mijozni o'chirish"
+          message={`${getDisplayName()} ni o'chirishni tasdiqlaysizmi?`}
+          confirmLabel="O'chirish"
+          cancelLabel="Bekor qilish"
+          confirmVariant="danger"
+          onConfirm={handleDelete}
+          onCancel={() => setShowDeleteDialog(false)}
+          isLoading={isDeleting}
+        />
       </div>
     </ProtectedRoute>
   );

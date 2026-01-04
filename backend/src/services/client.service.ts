@@ -1,5 +1,5 @@
 import { Types } from 'mongoose';
-import { Client, Conversation, ScheduledReminder } from '../models';
+import { Client, Conversation, ScheduledReminder, Order } from '../models';
 import { CreateClientRequest, UpdateClientRequest, GetClientsQuery, ClientStatus } from '../types';
 import { AppError } from '../middleware/error.middleware';
 
@@ -19,9 +19,9 @@ export class ClientService {
     if (query.search) {
       filter.$or = [
         { fullName: { $regex: query.search, $options: 'i' } },
+        { companyName: { $regex: query.search, $options: 'i' } },
         { phoneNumber: { $regex: query.search, $options: 'i' } },
-        { location: { $regex: query.search, $options: 'i' } },
-        { brandName: { $regex: query.search, $options: 'i' } },
+        { 'location.address': { $regex: query.search, $options: 'i' } },
       ];
     }
 
@@ -77,7 +77,7 @@ export class ClientService {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const [totalClients, todayFollowUps, statusCounts] = await Promise.all([
+    const [totalClients, todayFollowUps, statusCounts, orderStats] = await Promise.all([
       Client.countDocuments({ userId: userObjectId }),
       Client.countDocuments({
         userId: userObjectId,
@@ -87,6 +87,10 @@ export class ClientService {
         { $match: { userId: userObjectId } },
         { $group: { _id: '$status', count: { $sum: 1 } } },
       ]),
+      Order.aggregate([
+        { $match: { userId: userObjectId } },
+        { $group: { _id: '$status', count: { $sum: 1 }, totalAmount: { $sum: { $ifNull: ['$amount', 0] } } } },
+      ]),
     ]);
 
     const statusMap: Record<string, number> = {};
@@ -94,10 +98,16 @@ export class ClientService {
       statusMap[s._id] = s.count;
     });
 
+    const orderStatusMap: Record<string, { count: number; totalAmount: number }> = {};
+    orderStats.forEach((s) => {
+      orderStatusMap[s._id] = { count: s.count, totalAmount: s.totalAmount };
+    });
+
     return {
       totalClients,
       todayFollowUps,
       byStatus: statusMap,
+      orders: orderStatusMap,
     };
   }
 
@@ -124,11 +134,11 @@ export class ClientService {
     const client = await Client.create({
       userId: new Types.ObjectId(userId),
       fullName: data.fullName,
+      companyName: data.companyName,
       phoneNumber: data.phoneNumber,
       location: data.location,
-      brandName: data.brandName,
       notes: data.notes,
-      status: data.status,
+      status: data.status || 'new',
       followUpDate: data.followUpDate ? new Date(data.followUpDate) : undefined,
     });
 
@@ -162,10 +172,10 @@ export class ClientService {
     }
 
     // Update fields
-    if (data.fullName !== undefined) client.fullName = data.fullName;
+    if (data.fullName !== undefined) client.fullName = data.fullName || undefined;
+    if (data.companyName !== undefined) client.companyName = data.companyName || undefined;
     if (data.phoneNumber !== undefined) client.phoneNumber = data.phoneNumber;
     if (data.location !== undefined) client.location = data.location;
-    if (data.brandName !== undefined) client.brandName = data.brandName || undefined;
     if (data.notes !== undefined) client.notes = data.notes || undefined;
     if (data.status !== undefined) client.status = data.status as ClientStatus;
     if (newFollowUpDate !== undefined) {
@@ -189,7 +199,7 @@ export class ClientService {
   }
 
   /**
-   * Delete client and associated reminders and conversations
+   * Delete client and associated reminders, conversations, and orders
    */
   async deleteClient(userId: string, clientId: string) {
     const client = await Client.findOne({
@@ -208,6 +218,9 @@ export class ClientService {
 
     // Delete associated conversations
     await Conversation.deleteMany({ clientId: clientObjectId });
+
+    // Delete associated orders
+    await Order.deleteMany({ clientId: clientObjectId });
 
     // Delete client
     await Client.deleteOne({ _id: client._id });

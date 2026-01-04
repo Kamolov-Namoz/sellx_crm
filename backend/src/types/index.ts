@@ -1,8 +1,14 @@
 import { Request } from 'express';
 import { Types } from 'mongoose';
 
+// User role enum
+export type UserRole = 'admin' | 'user';
+
 // Client status enum
-export type ClientStatus = 'interested' | 'thinking' | 'callback' | 'not_interested' | 'deal_closed';
+export type ClientStatus = 'new' | 'thinking' | 'agreed' | 'rejected' | 'callback';
+
+// Order status enum
+export type OrderStatus = 'new' | 'in_progress' | 'completed';
 
 // Conversation type enum
 export type ConversationType = 'text' | 'audio' | 'image' | 'video';
@@ -10,9 +16,26 @@ export type ConversationType = 'text' | 'audio' | 'image' | 'video';
 // User interfaces
 export interface IUser {
   _id: Types.ObjectId;
+  firstName: string;
+  lastName: string;
   username: string;
+  phoneNumber: string;
   passwordHash: string;
+  role: UserRole;
   fcmTokens: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Order interfaces
+export interface IOrder {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  clientId: Types.ObjectId;
+  title: string;
+  description?: string;
+  amount?: number;
+  status: OrderStatus;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,10 +44,14 @@ export interface IUser {
 export interface IClient {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
-  fullName: string;
+  fullName?: string;
+  companyName?: string;
   phoneNumber: string;
-  location: string;
-  brandName?: string;
+  location: {
+    address?: string;
+    latitude: number;
+    longitude: number;
+  };
   notes?: string;
   status: ClientStatus;
   followUpDate?: Date;
@@ -64,7 +91,10 @@ export interface IScheduledReminder {
 
 // Auth request/response types
 export interface RegisterRequest {
+  firstName: string;
+  lastName: string;
   username: string;
+  phoneNumber: string;
   password: string;
 }
 
@@ -79,27 +109,61 @@ export interface AuthResponse {
   token?: string;
   expiresIn?: number;
   userId?: string;
+  role?: UserRole;
 }
 
 // Client request/response types
 export interface CreateClientRequest {
-  fullName: string;
+  fullName?: string;
+  companyName?: string;
   phoneNumber: string;
-  location: string;
-  brandName?: string;
+  location: {
+    address?: string;
+    latitude: number;
+    longitude: number;
+  };
   notes?: string;
-  status: ClientStatus;
+  status?: ClientStatus;
   followUpDate?: string;
 }
 
 export interface UpdateClientRequest {
   fullName?: string;
+  companyName?: string;
   phoneNumber?: string;
-  location?: string;
-  brandName?: string;
+  location?: {
+    address?: string;
+    latitude: number;
+    longitude: number;
+  };
   notes?: string;
   status?: ClientStatus;
   followUpDate?: string | null;
+}
+
+// Order request types
+export interface CreateOrderRequest {
+  clientId: string;
+  title: string;
+  description?: string;
+  amount?: number;
+  status?: OrderStatus;
+}
+
+export interface UpdateOrderRequest {
+  title?: string;
+  description?: string;
+  amount?: number;
+  status?: OrderStatus;
+}
+
+export interface GetOrdersQuery {
+  status?: OrderStatus;
+  clientId?: string;
+  sortBy?: 'createdAt' | 'amount';
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
 }
 
 // Conversation request types
@@ -141,6 +205,7 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     userId: string;
     username: string;
+    role: UserRole;
   };
 }
 
@@ -148,6 +213,7 @@ export interface AuthenticatedRequest extends Request {
 export interface JwtPayload {
   userId: string;
   username: string;
+  role: UserRole;
   iat?: number;
   exp?: number;
 }

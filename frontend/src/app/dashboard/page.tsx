@@ -3,26 +3,19 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { enUS } from 'date-fns/locale';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 import { useToast } from '@/contexts/ToastContext';
-import { clientService } from '@/services/client.service';
-import { Client, STATUS_LABELS, ClientStatus } from '@/types';
-
-interface Stats {
-  totalClients: number;
-  todayFollowUps: number;
-  byStatus: Record<string, number>;
-}
+import { clientService, Stats } from '@/services/client.service';
+import { Client, STATUS_LABELS, ClientStatus, ORDER_STATUS_LABELS } from '@/types';
 
 const statusColors: Record<ClientStatus, string> = {
-  interested: 'bg-blue-500',
+  new: 'bg-blue-500',
   thinking: 'bg-yellow-500',
+  agreed: 'bg-green-500',
+  rejected: 'bg-red-500',
   callback: 'bg-purple-500',
-  not_interested: 'bg-red-500',
-  deal_closed: 'bg-green-500',
 };
 
 export default function DashboardPage() {
@@ -44,7 +37,6 @@ export default function DashboardPage() {
       
       setStats(statsRes.data ?? null);
       
-      // Filter today's follow-ups
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
@@ -63,6 +55,10 @@ export default function DashboardPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getDisplayName = (client: Client) => {
+    return client.fullName || client.companyName || client.phoneNumber;
   };
 
   return (
@@ -91,9 +87,24 @@ export default function DashboardPage() {
                 </div>
               </div>
 
+              {/* Orders Stats */}
+              {stats?.orders && Object.keys(stats.orders).length > 0 && (
+                <div className="card">
+                  <h2 className="font-semibold text-white mb-3">Zakazlar</h2>
+                  <div className="grid grid-cols-3 gap-2">
+                    {Object.entries(stats.orders).map(([status, data]) => (
+                      <div key={status} className="text-center p-2 bg-dark-700 rounded-lg">
+                        <p className="text-lg font-bold text-white">{data.count}</p>
+                        <p className="text-xs text-gray-500">{ORDER_STATUS_LABELS[status as keyof typeof ORDER_STATUS_LABELS] || status}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Status Breakdown */}
               <div className="card">
-                <h2 className="font-semibold text-white mb-3">Status bo'yicha</h2>
+                <h2 className="font-semibold text-white mb-3">Mijozlar statusi</h2>
                 <div className="space-y-2">
                   {Object.entries(STATUS_LABELS).map(([status, label]) => {
                     const count = stats?.byStatus?.[status] || 0;
@@ -135,15 +146,15 @@ export default function DashboardPage() {
                         className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#242f3d] transition-colors"
                       >
                         <div className={`w-10 h-10 rounded-full ${statusColors[client.status]} flex items-center justify-center text-white font-semibold`}>
-                          {client.fullName.charAt(0).toUpperCase()}
+                          {getDisplayName(client).charAt(0).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-white font-medium truncate">{client.fullName}</p>
+                          <p className="text-white font-medium truncate">{getDisplayName(client)}</p>
                           <p className="text-gray-500 text-sm">{client.phoneNumber}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-orange-400 text-sm font-medium">
-                            {client.followUpDate && format(new Date(client.followUpDate), 'HH:mm', { locale: enUS })}
+                            {client.followUpDate && format(new Date(client.followUpDate), 'HH:mm')}
                           </p>
                         </div>
                       </Link>
@@ -157,20 +168,31 @@ export default function DashboardPage() {
               </div>
 
               {/* Quick Actions */}
-              <Link
-                href="/clients/new"
-                className="card flex items-center gap-3 hover:bg-[#1c2936]"
-              >
-                <div className="w-12 h-12 bg-primary-500/20 rounded-full flex items-center justify-center">
-                  <svg className="w-6 h-6 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-white font-medium">Yangi mijoz qo'shish</p>
-                  <p className="text-gray-500 text-sm">Mijozlar bazasiga qo'shing</p>
-                </div>
-              </Link>
+              <div className="grid grid-cols-2 gap-3">
+                <Link
+                  href="/clients/new"
+                  className="card flex flex-col items-center gap-2 py-4 hover:bg-[#1c2936]"
+                >
+                  <div className="w-12 h-12 bg-primary-500/20 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
+                  </div>
+                  <p className="text-white text-sm font-medium">Yangi mijoz</p>
+                </Link>
+                
+                <Link
+                  href="/orders"
+                  className="card flex flex-col items-center gap-2 py-4 hover:bg-[#1c2936]"
+                >
+                  <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                  </div>
+                  <p className="text-white text-sm font-medium">Zakazlar</p>
+                </Link>
+              </div>
             </div>
           )}
         </main>

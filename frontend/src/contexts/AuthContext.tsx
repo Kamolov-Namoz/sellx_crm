@@ -3,12 +3,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/auth.service';
-import { User, LoginCredentials, RegisterCredentials } from '@/types';
+import { User, LoginCredentials, RegisterCredentials, UserRole } from '@/types';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => void;
@@ -22,7 +23,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    // Check for existing session
     const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
     
@@ -44,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userData: User = {
         userId: response.userId,
         username: credentials.username,
+        role: response.role || 'user',
       };
       
       localStorage.setItem('token', response.token);
@@ -56,14 +57,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (credentials: RegisterCredentials): Promise<void> => {
+    console.log('AuthContext register called', credentials);
+    
     if (credentials.password !== credentials.confirmPassword) {
       throw new Error('Parollar mos kelmaydi');
     }
 
+    console.log('Calling authService.register...');
     const response = await authService.register({
+      firstName: credentials.firstName,
+      lastName: credentials.lastName,
       username: credentials.username,
+      phoneNumber: credentials.phoneNumber,
       password: credentials.password,
     });
+    console.log('authService.register response:', response);
 
     if (response.success) {
       router.push('/auth/login?registered=true');
@@ -84,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isLoading,
         isAuthenticated: !!user,
+        isAdmin: user?.role === 'admin',
         login,
         register,
         logout,

@@ -7,12 +7,10 @@ import 'leaflet/dist/leaflet.css';
 interface MapPickerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (address: string, lat: number, lng: number) => void;
-  initialLat?: number;
-  initialLng?: number;
+  onSelect: (lat: number, lng: number, address: string) => void;
+  initialPosition?: [number, number];
 }
 
-// Fix Leaflet default marker icon issue
 const defaultIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -23,18 +21,17 @@ const defaultIcon = L.icon({
   shadowSize: [41, 41],
 });
 
-export default function MapPicker({ isOpen, onClose, onSelect, initialLat, initialLng }: MapPickerProps) {
+export default function MapPicker({ isOpen, onClose, onSelect, initialPosition }: MapPickerProps) {
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
-  const [selectedLat, setSelectedLat] = useState(initialLat || 41.2995);
-  const [selectedLng, setSelectedLng] = useState(initialLng || 69.2401);
+  const [selectedLat, setSelectedLat] = useState(initialPosition?.[0] || 41.2995);
+  const [selectedLng, setSelectedLng] = useState(initialPosition?.[1] || 69.2401);
   const [address, setAddress] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
 
-  // Reverse geocoding
   const getAddressFromCoords = async (lat: number, lng: number) => {
     setIsLoading(true);
     try {
@@ -54,7 +51,6 @@ export default function MapPicker({ isOpen, onClose, onSelect, initialLat, initi
     }
   };
 
-  // Get current location
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
       alert('Geolokatsiya qo\'llab-quvvatlanmaydi');
@@ -86,7 +82,6 @@ export default function MapPicker({ isOpen, onClose, onSelect, initialLat, initi
     );
   };
 
-  // Initialize map
   useEffect(() => {
     if (!isOpen || !containerRef.current || mapRef.current) return;
 
@@ -119,10 +114,8 @@ export default function MapPicker({ isOpen, onClose, onSelect, initialLat, initi
     mapRef.current = map;
     markerRef.current = marker;
 
-    // Get initial address
     getAddressFromCoords(selectedLat, selectedLng);
 
-    // Cleanup
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
@@ -132,7 +125,6 @@ export default function MapPicker({ isOpen, onClose, onSelect, initialLat, initi
     };
   }, [isOpen]);
 
-  // Cleanup on close
   useEffect(() => {
     if (!isOpen && mapRef.current) {
       mapRef.current.remove();
@@ -142,7 +134,7 @@ export default function MapPicker({ isOpen, onClose, onSelect, initialLat, initi
   }, [isOpen]);
 
   const handleConfirm = () => {
-    onSelect(address, selectedLat, selectedLng);
+    onSelect(selectedLat, selectedLng, address);
     onClose();
   };
 
@@ -151,7 +143,6 @@ export default function MapPicker({ isOpen, onClose, onSelect, initialLat, initi
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div className="bg-dark-800 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-dark-700">
           <h2 className="text-lg font-semibold text-white">Xaritadan manzil tanlang</h2>
           <button onClick={onClose} className="p-2 text-gray-400 hover:text-white">
@@ -161,12 +152,10 @@ export default function MapPicker({ isOpen, onClose, onSelect, initialLat, initi
           </button>
         </div>
 
-        {/* Map */}
         <div ref={containerRef} className="h-[400px] w-full" />
 
-        {/* Address display */}
         <div className="p-4 border-t border-dark-700">
-          <div className="flex items-start gap-2 mb-4">
+          <div className="flex items-start gap-2 mb-2">
             <svg className="w-5 h-5 text-primary-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -175,8 +164,11 @@ export default function MapPicker({ isOpen, onClose, onSelect, initialLat, initi
               {isLoading ? 'Manzil aniqlanmoqda...' : address || 'Xaritadan joy tanlang'}
             </p>
           </div>
+          
+          <p className="text-xs text-gray-500 mb-4">
+            Koordinatalar: {selectedLat.toFixed(6)}, {selectedLng.toFixed(6)}
+          </p>
 
-          {/* Actions */}
           <div className="flex gap-3">
             <button
               type="button"
@@ -187,11 +179,11 @@ export default function MapPicker({ isOpen, onClose, onSelect, initialLat, initi
               {isLocating ? (
                 <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
               ) : (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 </svg>
               )}
               Mening joylashuvim
@@ -199,7 +191,7 @@ export default function MapPicker({ isOpen, onClose, onSelect, initialLat, initi
             <button
               type="button"
               onClick={handleConfirm}
-              disabled={isLoading || !address}
+              disabled={isLoading}
               className="flex-1 btn-primary py-2.5"
             >
               Tasdiqlash

@@ -38,9 +38,8 @@ const createConversationValidation = [
     .withMessage('Type must be text, audio, image, or video'),
   body('content').notEmpty().withMessage('Content is required'),
   body('summary')
+    .optional()
     .trim()
-    .notEmpty()
-    .withMessage('Summary is required')
     .isLength({ max: 2000 })
     .withMessage('Summary cannot exceed 2000 characters'),
   body('nextFollowUpDate')

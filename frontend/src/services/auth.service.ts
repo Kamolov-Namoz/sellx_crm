@@ -3,13 +3,37 @@ import { AuthResponse, LoginCredentials, RegisterCredentials } from '@/types';
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>('/auth/login', credentials);
-    return response.data;
+    try {
+      const response = await api.post<AuthResponse>('/auth/login', credentials);
+      return response.data;
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { message?: string; code?: string } } };
+        const message = axiosError.response?.data?.message || 'Login failed';
+        throw new Error(message);
+      }
+      throw error;
+    }
   },
 
   async register(credentials: Omit<RegisterCredentials, 'confirmPassword'>): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>('/auth/register', credentials);
-    return response.data;
+    try {
+      const response = await api.post<AuthResponse>('/auth/register', {
+        firstName: credentials.firstName,
+        lastName: credentials.lastName,
+        username: credentials.username,
+        phoneNumber: credentials.phoneNumber,
+        password: credentials.password,
+      });
+      return response.data;
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { message?: string; code?: string } } };
+        const message = axiosError.response?.data?.message || 'Registration failed';
+        throw new Error(message);
+      }
+      throw error;
+    }
   },
 
   logout(): void {
@@ -24,12 +48,6 @@ export const authService = {
       return localStorage.getItem('token');
     }
     return null;
-  },
-
-  setToken(token: string): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('token', token);
-    }
   },
 
   isAuthenticated(): boolean {

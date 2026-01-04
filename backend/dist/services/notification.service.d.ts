@@ -22,8 +22,8 @@ export declare class NotificationService {
         error?: undefined;
     } | {
         success: boolean;
-        successCount: number;
-        failureCount: number;
+        successCount: any;
+        failureCount: any;
         reason?: undefined;
         error?: undefined;
     } | {
@@ -44,8 +44,8 @@ export declare class NotificationService {
         error?: undefined;
     } | {
         success: boolean;
-        successCount: number;
-        failureCount: number;
+        successCount: any;
+        failureCount: any;
         reason?: undefined;
         error?: undefined;
     } | {

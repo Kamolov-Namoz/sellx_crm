@@ -1,4 +1,4 @@
-import { AuthResponse } from '../types';
+import { AuthResponse, RegisterRequest } from '../types';
 export declare class AuthService {
     /**
      * Validate password strength
@@ -7,7 +7,7 @@ export declare class AuthService {
     /**
      * Register a new user
      */
-    register(username: string, password: string): Promise<AuthResponse>;
+    register(data: RegisterRequest): Promise<AuthResponse>;
     /**
      * Login user and return JWT token
      */

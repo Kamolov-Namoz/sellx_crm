@@ -7,7 +7,6 @@ import { AuthenticatedRequest, ClientStatus } from '../types';
 
 const router = Router();
 
-// Apply auth middleware to all client routes
 router.use(authMiddleware);
 
 // Validation middleware
@@ -34,35 +33,42 @@ const validateRequest = (
 };
 
 // Valid client statuses
-const VALID_STATUSES: ClientStatus[] = ['interested', 'thinking', 'callback', 'not_interested', 'deal_closed'];
+const VALID_STATUSES: ClientStatus[] = ['new', 'thinking', 'agreed', 'rejected', 'callback'];
 
-// Client creation validation (without escape to preserve special characters)
+// Client creation validation
 const createClientValidation = [
   body('fullName')
+    .optional()
     .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Full name must be between 2 and 100 characters'),
+    .isLength({ max: 100 })
+    .withMessage('Full name cannot exceed 100 characters'),
+  body('companyName')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Company name cannot exceed 100 characters'),
   body('phoneNumber')
     .trim()
     .notEmpty()
     .withMessage('Phone number is required'),
-  body('location')
-    .trim()
-    .notEmpty()
-    .withMessage('Location is required')
-    .isLength({ max: 200 })
-    .withMessage('Location cannot exceed 200 characters'),
-  body('brandName')
+  body('location.latitude')
+    .isFloat({ min: -90, max: 90 })
+    .withMessage('Valid latitude is required'),
+  body('location.longitude')
+    .isFloat({ min: -180, max: 180 })
+    .withMessage('Valid longitude is required'),
+  body('location.address')
     .optional()
     .trim()
-    .isLength({ max: 100 })
-    .withMessage('Brand name cannot exceed 100 characters'),
+    .isLength({ max: 200 })
+    .withMessage('Address cannot exceed 200 characters'),
   body('notes')
     .optional()
     .trim()
     .isLength({ max: 2000 })
     .withMessage('Notes cannot exceed 2000 characters'),
   body('status')
+    .optional()
     .isIn(VALID_STATUSES)
     .withMessage(`Status must be one of: ${VALID_STATUSES.join(', ')}`),
   body('followUpDate')
@@ -71,28 +77,36 @@ const createClientValidation = [
     .withMessage('Invalid date format'),
 ];
 
-// Client update validation (all fields optional)
+// Client update validation
 const updateClientValidation = [
   body('fullName')
     .optional()
     .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Full name must be between 2 and 100 characters'),
+    .isLength({ max: 100 })
+    .withMessage('Full name cannot exceed 100 characters'),
+  body('companyName')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Company name cannot exceed 100 characters'),
   body('phoneNumber')
     .optional()
     .trim()
     .notEmpty()
     .withMessage('Phone number cannot be empty'),
-  body('location')
+  body('location.latitude')
+    .optional()
+    .isFloat({ min: -90, max: 90 })
+    .withMessage('Valid latitude is required'),
+  body('location.longitude')
+    .optional()
+    .isFloat({ min: -180, max: 180 })
+    .withMessage('Valid longitude is required'),
+  body('location.address')
     .optional()
     .trim()
     .isLength({ max: 200 })
-    .withMessage('Location cannot exceed 200 characters'),
-  body('brandName')
-    .optional()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage('Brand name cannot exceed 100 characters'),
+    .withMessage('Address cannot exceed 200 characters'),
   body('notes')
     .optional()
     .trim()
@@ -112,11 +126,11 @@ const updateClientValidation = [
     .withMessage('Invalid date format'),
 ];
 
-// Query validation for GET
+// Query validation
 const getClientsValidation = [
   query('status')
     .optional()
-    .isIn(['interested', 'thinking', 'callback', 'not_interested', 'deal_closed'])
+    .isIn(VALID_STATUSES)
     .withMessage('Invalid status filter'),
   query('sortBy')
     .optional()
@@ -141,6 +155,7 @@ const getClientsValidation = [
     .withMessage('Limit must be between 1 and 100'),
 ];
 
+
 /**
  * GET /api/clients/stats
  * Get dashboard statistics
@@ -149,13 +164,8 @@ router.get(
   '/stats',
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user!.userId;
-      const stats = await clientService.getStats(userId);
-
-      res.json({
-        success: true,
-        data: stats,
-      });
+      const stats = await clientService.getStats(req.user!.userId);
+      res.json({ success: true, data: stats });
     } catch (error) {
       next(error);
     }
@@ -172,8 +182,7 @@ router.get(
   validateRequest,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user!.userId;
-      const result = await clientService.getClients(userId, {
+      const result = await clientService.getClients(req.user!.userId, {
         status: req.query.status as ClientStatus | undefined,
         sortBy: req.query.sortBy as 'followUpDate' | 'createdAt' | 'name' | undefined,
         sortOrder: req.query.sortOrder as 'asc' | 'desc' | undefined,
@@ -181,11 +190,7 @@ router.get(
         page: req.query.page ? parseInt(req.query.page as string, 10) : undefined,
         limit: req.query.limit ? parseInt(req.query.limit as string, 10) : undefined,
       });
-
-      res.json({
-        success: true,
-        ...result,
-      });
+      res.json({ success: true, ...result });
     } catch (error) {
       next(error);
     }
@@ -202,13 +207,8 @@ router.get(
   validateRequest,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user!.userId;
-      const client = await clientService.getClient(userId, req.params.id);
-
-      res.json({
-        success: true,
-        data: client,
-      });
+      const client = await clientService.getClient(req.user!.userId, req.params.id);
+      res.json({ success: true, data: client });
     } catch (error) {
       next(error);
     }
@@ -225,13 +225,8 @@ router.post(
   validateRequest,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user!.userId;
-      const client = await clientService.createClient(userId, req.body);
-
-      res.status(201).json({
-        success: true,
-        data: client,
-      });
+      const client = await clientService.createClient(req.user!.userId, req.body);
+      res.status(201).json({ success: true, data: client });
     } catch (error) {
       next(error);
     }
@@ -249,13 +244,8 @@ router.put(
   validateRequest,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user!.userId;
-      const client = await clientService.updateClient(userId, req.params.id, req.body);
-
-      res.json({
-        success: true,
-        data: client,
-      });
+      const client = await clientService.updateClient(req.user!.userId, req.params.id, req.body);
+      res.json({ success: true, data: client });
     } catch (error) {
       next(error);
     }
@@ -272,9 +262,7 @@ router.delete(
   validateRequest,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user!.userId;
-      const result = await clientService.deleteClient(userId, req.params.id);
-
+      const result = await clientService.deleteClient(req.user!.userId, req.params.id);
       res.json(result);
     } catch (error) {
       next(error);

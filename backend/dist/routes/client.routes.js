@@ -6,7 +6,6 @@ const auth_middleware_1 = require("../middleware/auth.middleware");
 const error_middleware_1 = require("../middleware/error.middleware");
 const client_service_1 = require("../services/client.service");
 const router = (0, express_1.Router)();
-// Apply auth middleware to all client routes
 router.use(auth_middleware_1.authMiddleware);
 // Validation middleware
 const validateRequest = (req, _res, next) => {
@@ -27,34 +26,41 @@ const validateRequest = (req, _res, next) => {
     next();
 };
 // Valid client statuses
-const VALID_STATUSES = ['interested', 'thinking', 'callback', 'not_interested', 'deal_closed'];
-// Client creation validation (without escape to preserve special characters)
+const VALID_STATUSES = ['new', 'thinking', 'agreed', 'rejected', 'callback'];
+// Client creation validation
 const createClientValidation = [
     (0, express_validator_1.body)('fullName')
+        .optional()
         .trim()
-        .isLength({ min: 2, max: 100 })
-        .withMessage('Full name must be between 2 and 100 characters'),
+        .isLength({ max: 100 })
+        .withMessage('Full name cannot exceed 100 characters'),
+    (0, express_validator_1.body)('companyName')
+        .optional()
+        .trim()
+        .isLength({ max: 100 })
+        .withMessage('Company name cannot exceed 100 characters'),
     (0, express_validator_1.body)('phoneNumber')
         .trim()
         .notEmpty()
         .withMessage('Phone number is required'),
-    (0, express_validator_1.body)('location')
-        .trim()
-        .notEmpty()
-        .withMessage('Location is required')
-        .isLength({ max: 200 })
-        .withMessage('Location cannot exceed 200 characters'),
-    (0, express_validator_1.body)('brandName')
+    (0, express_validator_1.body)('location.latitude')
+        .isFloat({ min: -90, max: 90 })
+        .withMessage('Valid latitude is required'),
+    (0, express_validator_1.body)('location.longitude')
+        .isFloat({ min: -180, max: 180 })
+        .withMessage('Valid longitude is required'),
+    (0, express_validator_1.body)('location.address')
         .optional()
         .trim()
-        .isLength({ max: 100 })
-        .withMessage('Brand name cannot exceed 100 characters'),
+        .isLength({ max: 200 })
+        .withMessage('Address cannot exceed 200 characters'),
     (0, express_validator_1.body)('notes')
         .optional()
         .trim()
         .isLength({ max: 2000 })
         .withMessage('Notes cannot exceed 2000 characters'),
     (0, express_validator_1.body)('status')
+        .optional()
         .isIn(VALID_STATUSES)
         .withMessage(`Status must be one of: ${VALID_STATUSES.join(', ')}`),
     (0, express_validator_1.body)('followUpDate')
@@ -62,28 +68,36 @@ const createClientValidation = [
         .isISO8601()
         .withMessage('Invalid date format'),
 ];
-// Client update validation (all fields optional)
+// Client update validation
 const updateClientValidation = [
     (0, express_validator_1.body)('fullName')
         .optional()
         .trim()
-        .isLength({ min: 2, max: 100 })
-        .withMessage('Full name must be between 2 and 100 characters'),
+        .isLength({ max: 100 })
+        .withMessage('Full name cannot exceed 100 characters'),
+    (0, express_validator_1.body)('companyName')
+        .optional()
+        .trim()
+        .isLength({ max: 100 })
+        .withMessage('Company name cannot exceed 100 characters'),
     (0, express_validator_1.body)('phoneNumber')
         .optional()
         .trim()
         .notEmpty()
         .withMessage('Phone number cannot be empty'),
-    (0, express_validator_1.body)('location')
+    (0, express_validator_1.body)('location.latitude')
+        .optional()
+        .isFloat({ min: -90, max: 90 })
+        .withMessage('Valid latitude is required'),
+    (0, express_validator_1.body)('location.longitude')
+        .optional()
+        .isFloat({ min: -180, max: 180 })
+        .withMessage('Valid longitude is required'),
+    (0, express_validator_1.body)('location.address')
         .optional()
         .trim()
         .isLength({ max: 200 })
-        .withMessage('Location cannot exceed 200 characters'),
-    (0, express_validator_1.body)('brandName')
-        .optional()
-        .trim()
-        .isLength({ max: 100 })
-        .withMessage('Brand name cannot exceed 100 characters'),
+        .withMessage('Address cannot exceed 200 characters'),
     (0, express_validator_1.body)('notes')
         .optional()
         .trim()
@@ -103,11 +117,11 @@ const updateClientValidation = [
     })
         .withMessage('Invalid date format'),
 ];
-// Query validation for GET
+// Query validation
 const getClientsValidation = [
     (0, express_validator_1.query)('status')
         .optional()
-        .isIn(['interested', 'thinking', 'callback', 'not_interested', 'deal_closed'])
+        .isIn(VALID_STATUSES)
         .withMessage('Invalid status filter'),
     (0, express_validator_1.query)('sortBy')
         .optional()
@@ -137,12 +151,8 @@ const getClientsValidation = [
  */
 router.get('/stats', async (req, res, next) => {
     try {
-        const userId = req.user.userId;
-        const stats = await client_service_1.clientService.getStats(userId);
-        res.json({
-            success: true,
-            data: stats,
-        });
+        const stats = await client_service_1.clientService.getStats(req.user.userId);
+        res.json({ success: true, data: stats });
     }
     catch (error) {
         next(error);
@@ -154,8 +164,7 @@ router.get('/stats', async (req, res, next) => {
  */
 router.get('/', getClientsValidation, validateRequest, async (req, res, next) => {
     try {
-        const userId = req.user.userId;
-        const result = await client_service_1.clientService.getClients(userId, {
+        const result = await client_service_1.clientService.getClients(req.user.userId, {
             status: req.query.status,
             sortBy: req.query.sortBy,
             sortOrder: req.query.sortOrder,
@@ -163,10 +172,7 @@ router.get('/', getClientsValidation, validateRequest, async (req, res, next) =>
             page: req.query.page ? parseInt(req.query.page, 10) : undefined,
             limit: req.query.limit ? parseInt(req.query.limit, 10) : undefined,
         });
-        res.json({
-            success: true,
-            ...result,
-        });
+        res.json({ success: true, ...result });
     }
     catch (error) {
         next(error);
@@ -178,12 +184,8 @@ router.get('/', getClientsValidation, validateRequest, async (req, res, next) =>
  */
 router.get('/:id', (0, express_validator_1.param)('id').isMongoId().withMessage('Invalid client ID'), validateRequest, async (req, res, next) => {
     try {
-        const userId = req.user.userId;
-        const client = await client_service_1.clientService.getClient(userId, req.params.id);
-        res.json({
-            success: true,
-            data: client,
-        });
+        const client = await client_service_1.clientService.getClient(req.user.userId, req.params.id);
+        res.json({ success: true, data: client });
     }
     catch (error) {
         next(error);
@@ -195,12 +197,8 @@ router.get('/:id', (0, express_validator_1.param)('id').isMongoId().withMessage(
  */
 router.post('/', createClientValidation, validateRequest, async (req, res, next) => {
     try {
-        const userId = req.user.userId;
-        const client = await client_service_1.clientService.createClient(userId, req.body);
-        res.status(201).json({
-            success: true,
-            data: client,
-        });
+        const client = await client_service_1.clientService.createClient(req.user.userId, req.body);
+        res.status(201).json({ success: true, data: client });
     }
     catch (error) {
         next(error);
@@ -212,12 +210,8 @@ router.post('/', createClientValidation, validateRequest, async (req, res, next)
  */
 router.put('/:id', (0, express_validator_1.param)('id').isMongoId().withMessage('Invalid client ID'), updateClientValidation, validateRequest, async (req, res, next) => {
     try {
-        const userId = req.user.userId;
-        const client = await client_service_1.clientService.updateClient(userId, req.params.id, req.body);
-        res.json({
-            success: true,
-            data: client,
-        });
+        const client = await client_service_1.clientService.updateClient(req.user.userId, req.params.id, req.body);
+        res.json({ success: true, data: client });
     }
     catch (error) {
         next(error);
@@ -229,8 +223,7 @@ router.put('/:id', (0, express_validator_1.param)('id').isMongoId().withMessage(
  */
 router.delete('/:id', (0, express_validator_1.param)('id').isMongoId().withMessage('Invalid client ID'), validateRequest, async (req, res, next) => {
     try {
-        const userId = req.user.userId;
-        const result = await client_service_1.clientService.deleteClient(userId, req.params.id);
+        const result = await client_service_1.clientService.deleteClient(req.user.userId, req.params.id);
         res.json(result);
     }
     catch (error) {

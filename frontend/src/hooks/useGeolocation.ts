@@ -2,28 +2,32 @@
 
 import { useState, useCallback } from 'react';
 
+interface GeolocationPosition {
+  latitude: number;
+  longitude: number;
+  address?: string;
+}
+
 interface GeolocationState {
   isLoading: boolean;
   error: string | null;
-  address: string | null;
-  coords: { lat: number; lng: number } | null;
+  position: GeolocationPosition | null;
 }
 
 export function useGeolocation() {
   const [state, setState] = useState<GeolocationState>({
     isLoading: false,
     error: null,
-    address: null,
-    coords: null,
+    position: null,
   });
 
-  const getLocation = useCallback(async (): Promise<string | null> => {
+  const getCurrentPosition = useCallback(async (): Promise<GeolocationPosition | null> => {
     if (!navigator.geolocation) {
       setState((prev) => ({ ...prev, error: 'Geolocation qo\'llab-quvvatlanmaydi' }));
       return null;
     }
 
-    setState({ isLoading: true, error: null, address: null, coords: null });
+    setState({ isLoading: true, error: null, position: null });
 
     return new Promise((resolve) => {
       navigator.geolocation.getCurrentPosition(
@@ -31,49 +35,27 @@ export function useGeolocation() {
           const { latitude, longitude } = position.coords;
           
           try {
-            // Reverse geocoding with OpenStreetMap Nominatim
             const response = await fetch(
               `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=uz`,
-              {
-                headers: {
-                  'User-Agent': 'SalesCRM/1.0',
-                },
-              }
+              { headers: { 'User-Agent': 'SalesCRM/1.0' } }
             );
             
             if (response.ok) {
               const data = await response.json();
               const address = formatAddress(data);
               
-              setState({
-                isLoading: false,
-                error: null,
-                address,
-                coords: { lat: latitude, lng: longitude },
-              });
-              
-              resolve(address);
+              const result = { latitude, longitude, address };
+              setState({ isLoading: false, error: null, position: result });
+              resolve(result);
             } else {
-              // Fallback to coordinates
-              const fallback = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-              setState({
-                isLoading: false,
-                error: null,
-                address: fallback,
-                coords: { lat: latitude, lng: longitude },
-              });
-              resolve(fallback);
+              const result = { latitude, longitude };
+              setState({ isLoading: false, error: null, position: result });
+              resolve(result);
             }
           } catch {
-            // Fallback to coordinates on error
-            const fallback = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-            setState({
-              isLoading: false,
-              error: null,
-              address: fallback,
-              coords: { lat: latitude, lng: longitude },
-            });
-            resolve(fallback);
+            const result = { latitude, longitude };
+            setState({ isLoading: false, error: null, position: result });
+            resolve(result);
           }
         },
         (error) => {
@@ -91,27 +73,17 @@ export function useGeolocation() {
               break;
           }
           
-          setState({
-            isLoading: false,
-            error: errorMessage,
-            address: null,
-            coords: null,
-          });
-          
+          setState({ isLoading: false, error: errorMessage, position: null });
           resolve(null);
         },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000,
-        }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
       );
     });
   }, []);
 
   return {
     ...state,
-    getLocation,
+    getCurrentPosition,
   };
 }
 
@@ -124,37 +96,26 @@ function formatAddress(data: {
     neighbourhood?: string;
     road?: string;
     house_number?: string;
-    state?: string;
     county?: string;
-    country?: string;
   };
   display_name?: string;
 }): string {
   const addr = data.address;
   
-  if (!addr) {
-    return data.display_name || 'Noma\'lum manzil';
-  }
+  if (!addr) return data.display_name || '';
 
   const parts: string[] = [];
   
-  // City/Town/Village
   const city = addr.city || addr.town || addr.village;
   if (city) parts.push(city);
   
-  // District/Suburb
   const district = addr.suburb || addr.neighbourhood || addr.county;
   if (district && district !== city) parts.push(district);
   
-  // Street
   if (addr.road) {
     const street = addr.house_number ? `${addr.road} ${addr.house_number}` : addr.road;
     parts.push(street);
   }
 
-  if (parts.length === 0) {
-    return data.display_name || 'Noma\'lum manzil';
-  }
-
-  return parts.join(', ');
+  return parts.length > 0 ? parts.join(', ') : data.display_name || '';
 }

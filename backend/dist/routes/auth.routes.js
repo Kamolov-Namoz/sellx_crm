@@ -28,12 +28,24 @@ const validateRequest = (req, _res, next) => {
 };
 // Register validation rules
 const registerValidation = [
+    (0, express_validator_1.body)('firstName')
+        .trim()
+        .isLength({ min: 2, max: 50 })
+        .withMessage('First name must be between 2 and 50 characters'),
+    (0, express_validator_1.body)('lastName')
+        .trim()
+        .isLength({ min: 2, max: 50 })
+        .withMessage('Last name must be between 2 and 50 characters'),
     (0, express_validator_1.body)('username')
         .trim()
         .isLength({ min: 3, max: 50 })
         .withMessage('Username must be between 3 and 50 characters')
         .matches(/^[a-zA-Z0-9_]+$/)
         .withMessage('Username can only contain letters, numbers, and underscores'),
+    (0, express_validator_1.body)('phoneNumber')
+        .trim()
+        .notEmpty()
+        .withMessage('Phone number is required'),
     (0, express_validator_1.body)('password')
         .isLength({ min: 8 })
         .withMessage('Password must be at least 8 characters')
@@ -55,8 +67,7 @@ const loginValidation = [
  */
 router.post('/register', registerValidation, validateRequest, async (req, res, next) => {
     try {
-        const { username, password } = req.body;
-        const result = await auth_service_1.authService.register(username, password);
+        const result = await auth_service_1.authService.register(req.body);
         res.status(201).json(result);
     }
     catch (error) {

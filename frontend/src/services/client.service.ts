@@ -1,16 +1,20 @@
 import api from './api';
-import { Client, ClientFormData, ClientsResponse, ApiResponse, ClientStatus } from '@/types';
+import { Client, ClientFormData, ApiResponse, ClientStatus, PaginatedResponse } from '@/types';
 
 export interface GetClientsParams {
   status?: ClientStatus;
   sortBy?: 'followUpDate' | 'createdAt' | 'name';
   sortOrder?: 'asc' | 'desc';
+  search?: string;
+  page?: number;
+  limit?: number;
 }
 
 export interface Stats {
   totalClients: number;
   todayFollowUps: number;
   byStatus: Record<string, number>;
+  orders?: Record<string, { count: number; totalAmount: number }>;
 }
 
 export const clientService = {
@@ -19,8 +23,8 @@ export const clientService = {
     return response.data;
   },
 
-  async getClients(params?: GetClientsParams): Promise<ClientsResponse> {
-    const response = await api.get<ClientsResponse>('/clients', { params });
+  async getClients(params?: GetClientsParams): Promise<PaginatedResponse<Client>> {
+    const response = await api.get<PaginatedResponse<Client>>('/clients', { params });
     return response.data;
   },
 
@@ -31,14 +35,14 @@ export const clientService = {
 
   async createClient(data: ClientFormData): Promise<ApiResponse<Client>> {
     const cleanData: Record<string, unknown> = {
-      fullName: data.fullName,
       phoneNumber: data.phoneNumber,
       location: data.location,
-      status: data.status,
+      status: data.status || 'new',
     };
-    // Include optional fields even if empty string (to allow clearing)
-    if (data.brandName !== undefined) cleanData.brandName = data.brandName || '';
-    if (data.notes !== undefined) cleanData.notes = data.notes || '';
+    
+    if (data.fullName) cleanData.fullName = data.fullName;
+    if (data.companyName) cleanData.companyName = data.companyName;
+    if (data.notes) cleanData.notes = data.notes;
     if (data.followUpDate) cleanData.followUpDate = new Date(data.followUpDate).toISOString();
     
     const response = await api.post<ApiResponse<Client>>('/clients', cleanData);
@@ -47,10 +51,11 @@ export const clientService = {
 
   async updateClient(id: string, data: Partial<ClientFormData>): Promise<ApiResponse<Client>> {
     const cleanData: Record<string, unknown> = {};
+    
     if (data.fullName !== undefined) cleanData.fullName = data.fullName;
+    if (data.companyName !== undefined) cleanData.companyName = data.companyName;
     if (data.phoneNumber !== undefined) cleanData.phoneNumber = data.phoneNumber;
     if (data.location !== undefined) cleanData.location = data.location;
-    if (data.brandName !== undefined) cleanData.brandName = data.brandName;
     if (data.status !== undefined) cleanData.status = data.status;
     if (data.notes !== undefined) cleanData.notes = data.notes;
     if (data.followUpDate !== undefined) {

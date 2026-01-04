@@ -35,7 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Client = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const CLIENT_STATUSES = ['interested', 'thinking', 'callback', 'not_interested', 'deal_closed'];
+const CLIENT_STATUSES = ['new', 'thinking', 'agreed', 'rejected', 'callback'];
 const clientSchema = new mongoose_1.Schema({
     userId: {
         type: mongoose_1.Schema.Types.ObjectId,
@@ -45,10 +45,13 @@ const clientSchema = new mongoose_1.Schema({
     },
     fullName: {
         type: String,
-        required: [true, 'Full name is required'],
         trim: true,
-        minlength: [2, 'Full name must be at least 2 characters'],
         maxlength: [100, 'Full name cannot exceed 100 characters'],
+    },
+    companyName: {
+        type: String,
+        trim: true,
+        maxlength: [100, 'Company name cannot exceed 100 characters'],
     },
     phoneNumber: {
         type: String,
@@ -56,15 +59,19 @@ const clientSchema = new mongoose_1.Schema({
         trim: true,
     },
     location: {
-        type: String,
-        required: [true, 'Location is required'],
-        trim: true,
-        maxlength: [200, 'Location cannot exceed 200 characters'],
-    },
-    brandName: {
-        type: String,
-        trim: true,
-        maxlength: [100, 'Brand name cannot exceed 100 characters'],
+        address: {
+            type: String,
+            trim: true,
+            maxlength: [200, 'Address cannot exceed 200 characters'],
+        },
+        latitude: {
+            type: Number,
+            required: [true, 'Latitude is required'],
+        },
+        longitude: {
+            type: Number,
+            required: [true, 'Longitude is required'],
+        },
     },
     notes: {
         type: String,
@@ -77,7 +84,7 @@ const clientSchema = new mongoose_1.Schema({
             values: CLIENT_STATUSES,
             message: 'Status must be one of: ' + CLIENT_STATUSES.join(', '),
         },
-        default: 'interested',
+        default: 'new',
     },
     followUpDate: {
         type: Date,
@@ -94,5 +101,7 @@ const clientSchema = new mongoose_1.Schema({
 clientSchema.index({ userId: 1, status: 1 });
 clientSchema.index({ userId: 1, followUpDate: 1 });
 clientSchema.index({ userId: 1, createdAt: -1 });
+// Geospatial index for map queries
+clientSchema.index({ 'location.latitude': 1, 'location.longitude': 1 });
 exports.Client = mongoose_1.default.model('Client', clientSchema);
 //# sourceMappingURL=client.model.js.map

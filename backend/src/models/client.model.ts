@@ -3,7 +3,7 @@ import { IClient, ClientStatus } from '../types';
 
 export interface ClientDocument extends Omit<IClient, '_id'>, Document {}
 
-const CLIENT_STATUSES: ClientStatus[] = ['interested', 'thinking', 'callback', 'not_interested', 'deal_closed'];
+const CLIENT_STATUSES: ClientStatus[] = ['new', 'thinking', 'agreed', 'rejected', 'callback'];
 
 const clientSchema = new Schema<ClientDocument>(
   {
@@ -15,10 +15,13 @@ const clientSchema = new Schema<ClientDocument>(
     },
     fullName: {
       type: String,
-      required: [true, 'Full name is required'],
       trim: true,
-      minlength: [2, 'Full name must be at least 2 characters'],
       maxlength: [100, 'Full name cannot exceed 100 characters'],
+    },
+    companyName: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'Company name cannot exceed 100 characters'],
     },
     phoneNumber: {
       type: String,
@@ -26,15 +29,19 @@ const clientSchema = new Schema<ClientDocument>(
       trim: true,
     },
     location: {
-      type: String,
-      required: [true, 'Location is required'],
-      trim: true,
-      maxlength: [200, 'Location cannot exceed 200 characters'],
-    },
-    brandName: {
-      type: String,
-      trim: true,
-      maxlength: [100, 'Brand name cannot exceed 100 characters'],
+      address: {
+        type: String,
+        trim: true,
+        maxlength: [200, 'Address cannot exceed 200 characters'],
+      },
+      latitude: {
+        type: Number,
+        required: [true, 'Latitude is required'],
+      },
+      longitude: {
+        type: Number,
+        required: [true, 'Longitude is required'],
+      },
     },
     notes: {
       type: String,
@@ -47,7 +54,7 @@ const clientSchema = new Schema<ClientDocument>(
         values: CLIENT_STATUSES,
         message: 'Status must be one of: ' + CLIENT_STATUSES.join(', '),
       },
-      default: 'interested',
+      default: 'new',
     },
     followUpDate: {
       type: Date,
@@ -67,5 +74,7 @@ const clientSchema = new Schema<ClientDocument>(
 clientSchema.index({ userId: 1, status: 1 });
 clientSchema.index({ userId: 1, followUpDate: 1 });
 clientSchema.index({ userId: 1, createdAt: -1 });
+// Geospatial index for map queries
+clientSchema.index({ 'location.latitude': 1, 'location.longitude': 1 });
 
 export const Client = mongoose.model<ClientDocument>('Client', clientSchema);

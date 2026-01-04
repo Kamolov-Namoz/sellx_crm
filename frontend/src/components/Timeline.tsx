@@ -120,9 +120,6 @@ function MessageBubble({ conversation: conv, onDelete }: MessageBubbleProps) {
               <audio controls className="w-full min-w-[200px]">
                 <source src={mediaUrl} />
               </audio>
-              {conv.metadata?.fileName && (
-                <p className="text-xs text-primary-200 mt-1 truncate">{conv.metadata.fileName}</p>
-              )}
             </div>
           )}
           
@@ -140,41 +137,33 @@ function MessageBubble({ conversation: conv, onDelete }: MessageBubbleProps) {
           {conv.type === 'text' && (
             <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{conv.content}</p>
           )}
-          
-          {/* Time */}
-          <div className="flex items-center justify-end gap-1 mt-1 -mb-0.5">
-            <span className="text-[11px] text-primary-200">{time}</span>
-            <svg className="w-4 h-4 text-primary-200" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-            </svg>
-          </div>
-        </div>
-        
-        {/* Summary Note - Below bubble */}
-        <div className="mt-2 ml-2 bg-[#1e2c3a] rounded-xl rounded-tr-md px-3 py-2">
-          <div className="flex items-start gap-2">
-            <svg className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <p className="text-sm text-gray-300 flex-1">{conv.summary}</p>
-          </div>
-          
-          {/* Next Follow-up */}
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-700">
-            <div className="flex items-center gap-1 text-xs text-orange-400">
+
+          {/* Next Follow-up inside bubble */}
+          {conv.nextFollowUpDate && (
+            <div className="flex items-center gap-1 mt-2 pt-2 border-t border-primary-400/30 text-xs text-primary-200">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span>Keyingi: {format(new Date(conv.nextFollowUpDate), 'd MMM, HH:mm', { locale: enUS })}</span>
             </div>
+          )}
+          
+          {/* Time and actions */}
+          <div className="flex items-center justify-between mt-1 -mb-0.5">
             {onDelete && (
               <button
                 onClick={() => onDelete(conv._id)}
-                className="text-xs text-gray-500 hover:text-red-400 transition-colors"
+                className="text-[11px] text-primary-200/70 hover:text-red-300 transition-colors"
               >
                 O'chirish
               </button>
             )}
+            <div className="flex items-center gap-1 ml-auto">
+              <span className="text-[11px] text-primary-200">{time}</span>
+              <svg className="w-4 h-4 text-primary-200" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+              </svg>
+            </div>
           </div>
         </div>
       </div>

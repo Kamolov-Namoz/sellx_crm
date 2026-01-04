@@ -1,18 +1,25 @@
-# SellX CRM
+# SellX CRM + PM
 
-Sales Automation PWA - Mijozlarni boshqarish va follow-up eslatmalar tizimi.
+Savdogarlar uchun CRM + PM tizimi - Mijozlarni boshqarish, zakazlar va follow-up eslatmalar.
 
 ## 🚀 Xususiyatlar
 
 - 📱 PWA (Progressive Web App) - telefondan o'rnatish mumkin
 - 👥 Mijozlarni boshqarish (CRUD)
+- 📦 Zakazlar boshqaruvi (yangi / jarayonda / tugallangan)
 - 📅 Follow-up eslatmalar va bildirishnomalar
 - 💬 Mijoz bilan suhbat tarixi (matn, audio, rasm, video)
-- 🗺️ Xaritadan manzil tanlash
+- 🗺️ Xaritadan manzil tanlash (latitude/longitude)
 - 📍 GPS orqali joylashuvni aniqlash
 - 🔔 Push notifications
 - 📴 Offline rejim qo'llab-quvvatlash
 - 🔐 JWT autentifikatsiya
+- 👨‍💼 Admin panel
+
+## 👥 Rollar
+
+- **Admin** - barcha userlar, mijozlar, zakazlarni ko'rish, xaritada mijozlar
+- **User (Savdogar)** - o'z mijozlari va zakazlarini boshqarish
 
 ## 🛠️ Texnologiyalar
 
@@ -22,14 +29,16 @@ Sales Automation PWA - Mijozlarni boshqarish va follow-up eslatmalar tizimi.
 - TypeScript
 - Tailwind CSS
 - Leaflet (xarita)
+- Zustand (state management)
 - PWA
 
 ### Backend
 - Node.js
 - Express.js
 - TypeScript
-- MongoDB
+- MongoDB + Mongoose
 - JWT Authentication
+- Multer (fayl yuklash)
 - Firebase (push notifications)
 
 ## 📦 O'rnatish
@@ -60,26 +69,35 @@ chmod +x deploy.sh
 sudo ./deploy.sh
 ```
 
-## 🌐 Demo
-
-**URL:** https://sellx.prox.uz
-
 ## 📁 Loyiha strukturasi
 
 ```
 sellx_crm/
-├── backend/           # Express.js API
+├── backend/
 │   ├── src/
 │   │   ├── config/
 │   │   ├── database/
 │   │   ├── middleware/
 │   │   ├── models/
+│   │   │   ├── user.model.ts
+│   │   │   ├── client.model.ts
+│   │   │   ├── order.model.ts
+│   │   │   ├── conversation.model.ts
+│   │   │   └── reminder.model.ts
 │   │   ├── routes/
+│   │   │   ├── auth.routes.ts
+│   │   │   ├── client.routes.ts
+│   │   │   ├── order.routes.ts
+│   │   │   ├── conversation.routes.ts
+│   │   │   ├── admin.routes.ts
+│   │   │   └── upload.routes.ts
 │   │   ├── services/
 │   │   └── types/
 │   └── uploads/
-├── frontend/          # Next.js PWA
-│   ├── public/
+│       ├── images/
+│       ├── videos/
+│       └── audios/
+├── frontend/
 │   └── src/
 │       ├── app/
 │       ├── components/
@@ -87,39 +105,66 @@ sellx_crm/
 │       ├── hooks/
 │       ├── services/
 │       └── types/
-└── deploy/            # Deployment files
-    ├── docker-compose.yml
-    ├── nginx.conf
-    └── deploy.sh
+└── deploy/
 ```
 
 ## 📝 API Endpoints
 
 ### Auth
-- `POST /api/auth/register` - Ro'yxatdan o'tish
+- `POST /api/auth/register` - Ro'yxatdan o'tish (firstName, lastName, username, phoneNumber, password)
 - `POST /api/auth/login` - Kirish
 
 ### Clients
 - `GET /api/clients` - Barcha mijozlar
+- `GET /api/clients/stats` - Statistika
 - `GET /api/clients/:id` - Bitta mijoz
-- `POST /api/clients` - Yangi mijoz
+- `POST /api/clients` - Yangi mijoz (location: {latitude, longitude, address})
 - `PUT /api/clients/:id` - Mijozni yangilash
 - `DELETE /api/clients/:id` - Mijozni o'chirish
-- `GET /api/clients/stats` - Statistika
 
-### Conversations
+### Orders (Zakazlar)
+- `GET /api/orders` - Barcha zakazlar
+- `GET /api/orders/stats` - Zakaz statistikasi
+- `GET /api/orders/:id` - Bitta zakaz
+- `POST /api/orders` - Yangi zakaz
+- `PUT /api/orders/:id` - Zakazni yangilash
+- `DELETE /api/orders/:id` - Zakazni o'chirish
+
+### Conversations (Chat)
 - `GET /api/conversations/:clientId` - Suhbatlar
 - `POST /api/conversations` - Yangi suhbat
 - `DELETE /api/conversations/:id` - O'chirish
 
 ### Upload
-- `POST /api/upload` - Fayl yuklash
+- `POST /api/upload` - Fayl yuklash (images/, videos/, audios/ papkalariga)
+
+### Admin (faqat admin uchun)
+- `GET /api/admin/stats` - Umumiy statistika
+- `GET /api/admin/users` - Barcha userlar
+- `GET /api/admin/users/:id` - User tafsilotlari
+- `GET /api/admin/clients` - Barcha mijozlar
+- `GET /api/admin/clients/map` - Xaritada mijozlar
+- `GET /api/admin/orders` - Barcha zakazlar
+
+## 📊 Statuslar
+
+### Mijoz statuslari
+- `new` - Yangi
+- `thinking` - O'ylab ko'raman
+- `agreed` - Roziman
+- `rejected` - Rad etdi
+- `callback` - Keyinroq bog'lanish
+
+### Zakaz statuslari
+- `new` - Yangi
+- `in_progress` - Jarayonda
+- `completed` - Tugallangan
 
 ## 🔒 Environment Variables
 
 ### Backend (.env)
 ```
-PORT=5000
+PORT=9999
 NODE_ENV=production
 MONGODB_URI=mongodb://...
 JWT_SECRET=your-secret-key
@@ -134,7 +179,3 @@ NEXT_PUBLIC_API_URL=https://sellx.prox.uz/api
 ## 📄 Litsenziya
 
 MIT License
-
-## 👨‍💻 Muallif
-
-SellX Team

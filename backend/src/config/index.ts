@@ -58,13 +58,6 @@ export const config = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '1h',
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
 
-  // Firebase
-  firebase: {
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-  },
-
   // CORS
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:9090',
 };

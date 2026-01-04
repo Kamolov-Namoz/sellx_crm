@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
+import { NotificationProvider } from '@/contexts/NotificationContext';
 import OfflineIndicator from '@/components/OfflineIndicator';
 import InstallPrompt from '@/components/InstallPrompt';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
@@ -81,10 +82,12 @@ export default function RootLayout({
         <ErrorBoundary>
           <AuthProvider>
             <ToastProvider>
-              <ServiceWorkerRegistration />
-              <OfflineIndicator />
-              {children}
-              <InstallPrompt />
+              <NotificationProvider>
+                <ServiceWorkerRegistration />
+                <OfflineIndicator />
+                {children}
+                <InstallPrompt />
+              </NotificationProvider>
             </ToastProvider>
           </AuthProvider>
         </ErrorBoundary>

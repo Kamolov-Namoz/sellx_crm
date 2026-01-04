@@ -1,4 +1,4 @@
-import mongoose, { Document } from 'mongoose';
+import { Document } from 'mongoose';
 import { Types } from 'mongoose';
 import { ConversationType } from '../types';
 export interface IConversation {
@@ -20,9 +20,5 @@ export interface IConversation {
 }
 export interface ConversationDocument extends Omit<IConversation, '_id'>, Document {
 }
-export declare const Conversation: mongoose.Model<ConversationDocument, {}, {}, {}, mongoose.Document<unknown, {}, ConversationDocument, {}, {}> & ConversationDocument & Required<{
-    _id: Types.ObjectId;
-}> & {
-    __v: number;
-}, any>;
+export declare const Conversation: any;
 //# sourceMappingURL=conversation.model.d.ts.map

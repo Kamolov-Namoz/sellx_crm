@@ -31,12 +31,22 @@ const validateRequest = (req: Request, _res: Response, next: NextFunction): void
 
 // Register validation rules
 const registerValidation = [
+  body('firstName')
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('First name must be between 2 and 50 characters'),
+  body('lastName')
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Last name must be between 2 and 50 characters'),
   body('username')
     .trim()
     .isLength({ min: 3, max: 50 })
-    .withMessage('Username must be between 3 and 50 characters')
-    .matches(/^[a-zA-Z0-9_]+$/)
-    .withMessage('Username can only contain letters, numbers, and underscores'),
+    .withMessage('Username must be between 3 and 50 characters'),
+  body('phoneNumber')
+    .trim()
+    .notEmpty()
+    .withMessage('Phone number is required'),
   body('password')
     .isLength({ min: 8 })
     .withMessage('Password must be at least 8 characters')
@@ -64,8 +74,7 @@ router.post(
   validateRequest,
   async (req: Request<object, object, RegisterRequest>, res: Response, next: NextFunction) => {
     try {
-      const { username, password } = req.body;
-      const result = await authService.register(username, password);
+      const result = await authService.register(req.body);
       res.status(201).json(result);
     } catch (error) {
       next(error);
