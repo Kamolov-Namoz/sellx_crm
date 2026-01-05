@@ -1,30 +1,17 @@
-import { Types } from 'mongoose';
-import { Employee, IEmployee } from '../models';
+import { User } from '../models';
 
 export class EmployeeService {
-  async create(userId: string, data: Partial<IEmployee>) {
-    const employee = new Employee({
-      ...data,
-      userId: new Types.ObjectId(userId),
-    });
-    return employee.save();
-  }
-
-  async getAll(userId: string) {
-    return Employee.find({ userId: new Types.ObjectId(userId), isActive: true })
+  // Barcha developer rolidagi userlarni olish
+  async getAll() {
+    return User.find({ role: 'developer' })
+      .select('_id firstName lastName username phoneNumber createdAt')
       .sort({ createdAt: -1 });
   }
 
+  // Bitta developer ni olish
   async getById(id: string) {
-    return Employee.findById(id);
-  }
-
-  async update(id: string, data: Partial<IEmployee>) {
-    return Employee.findByIdAndUpdate(id, data, { new: true });
-  }
-
-  async delete(id: string) {
-    return Employee.findByIdAndUpdate(id, { isActive: false }, { new: true });
+    return User.findOne({ _id: id, role: 'developer' })
+      .select('_id firstName lastName username phoneNumber createdAt');
   }
 }
 

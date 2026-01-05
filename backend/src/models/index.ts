@@ -5,3 +5,5 @@ export { ScheduledReminder, ReminderDocument } from './reminder.model';
 export { Conversation, ConversationDocument } from './conversation.model';
 export { Employee, IEmployee } from './employee.model';
 export { ProjectTask, IProjectTask } from './projectTask.model';
+export { ProjectChat, IProjectChat } from './projectChat.model';
+export { Notification, INotification } from './notification.model';

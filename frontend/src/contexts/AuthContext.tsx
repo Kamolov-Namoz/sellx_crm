@@ -10,6 +10,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isDeveloper: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => void;
@@ -70,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       username: credentials.username,
       phoneNumber: credentials.phoneNumber,
       password: credentials.password,
+      role: credentials.role,
     });
     console.log('authService.register response:', response);
 
@@ -93,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin',
+        isDeveloper: user?.role === 'developer',
         login,
         register,
         logout,

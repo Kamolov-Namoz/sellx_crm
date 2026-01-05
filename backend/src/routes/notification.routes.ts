@@ -1,125 +1,55 @@
-import { Router, Response, NextFunction } from 'express';
-import { body, validationResult } from 'express-validator';
-import { authMiddleware } from '../middleware/auth.middleware';
-import { AppError } from '../middleware/error.middleware';
+import { Router, Response } from 'express';
 import { notificationService } from '../services/notification.service';
+import { authMiddleware } from '../middleware/auth.middleware';
 import { AuthenticatedRequest } from '../types';
 
 const router = Router();
 
-// Apply auth middleware
-router.use(authMiddleware);
-
-// Validation middleware
-const validateRequest = (
-  req: AuthenticatedRequest,
-  _res: Response,
-  next: NextFunction
-): void => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    const details: Record<string, string[]> = {};
-    errors.array().forEach((error) => {
-      if (error.type === 'field') {
-        const field = error.path;
-        if (!details[field]) {
-          details[field] = [];
-        }
-        details[field].push(error.msg);
-      }
-    });
-    throw new AppError('Validation failed', 400, 'VALIDATION_ERROR', details);
+// Notificationlarni olish
+router.get('/', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    
+    const result = await notificationService.getByUser(req.user!.userId, page, limit);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Xatolik yuz berdi' });
   }
-  next();
-};
+});
 
-/**
- * POST /api/notifications/subscribe
- * Register FCM token for push notifications
- */
-router.post(
-  '/subscribe',
-  body('deviceToken').notEmpty().withMessage('Device token is required'),
-  validateRequest,
-  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    try {
-      const userId = req.user!.userId;
-      const { deviceToken } = req.body;
+// O'qilmagan notificationlar soni
+router.get('/unread-count', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const count = await notificationService.getUnreadCount(req.user!.userId);
+    res.json({ success: true, data: { count } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Xatolik yuz berdi' });
+  }
+});
 
-      await notificationService.registerToken(userId, deviceToken);
-
-      res.json({
-        success: true,
-        message: 'Device registered for notifications',
-      });
-    } catch (error) {
-      next(error);
+// Notificationni o'qilgan deb belgilash
+router.patch('/:id/read', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const notification = await notificationService.markAsRead(req.params.id, req.user!.userId);
+    if (!notification) {
+      res.status(404).json({ success: false, message: 'Notification topilmadi' });
+      return;
     }
+    res.json({ success: true, data: notification });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Xatolik yuz berdi' });
   }
-);
+});
 
-/**
- * DELETE /api/notifications/unsubscribe
- * Remove FCM token
- */
-router.delete(
-  '/unsubscribe',
-  body('deviceToken').notEmpty().withMessage('Device token is required'),
-  validateRequest,
-  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    try {
-      const userId = req.user!.userId;
-      const { deviceToken } = req.body;
-
-      await notificationService.removeToken(userId, deviceToken);
-
-      res.json({
-        success: true,
-        message: 'Device unregistered from notifications',
-      });
-    } catch (error) {
-      next(error);
-    }
+// Barcha notificationlarni o'qilgan deb belgilash
+router.patch('/read-all', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    await notificationService.markAllAsRead(req.user!.userId);
+    res.json({ success: true, message: 'Barcha notificationlar o\'qildi' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Xatolik yuz berdi' });
   }
-);
-
-/**
- * POST /api/notifications/test
- * Send test notification (for development)
- */
-router.post(
-  '/test',
-  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    try {
-      const userId = req.user!.userId;
-      
-      // Get user's tokens
-      const { User } = await import('../models');
-      const user = await User.findById(userId);
-      
-      if (!user || user.fcmTokens.length === 0) {
-        res.json({
-          success: false,
-          message: 'No registered devices found',
-        });
-        return;
-      }
-
-      const result = await notificationService.sendNotification(
-        user.fcmTokens,
-        'Test bildirishnoma',
-        'Bu test bildirishnomasi',
-        { action: 'test' }
-      );
-
-      res.json({
-        success: true,
-        result,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-);
+});
 
 export default router;

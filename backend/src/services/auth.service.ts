@@ -44,10 +44,14 @@ export class AuthService {
    * Register a new user
    */
   async register(data: RegisterRequest): Promise<AuthResponse> {
-    const { firstName, lastName, username, phoneNumber, password } = data;
+    const { firstName, lastName, username, phoneNumber, password, role } = data;
 
     // Validate password strength on backend
     this.validatePassword(password);
+
+    // Validate role - faqat user yoki developer bo'lishi mumkin
+    const allowedRoles = ['user', 'developer'];
+    const userRole = role && allowedRoles.includes(role) ? role : 'user';
 
     // Check if username already exists
     const existingUser = await User.findOne({ 
@@ -70,7 +74,7 @@ export class AuthService {
       username,
       phoneNumber,
       passwordHash,
-      role: 'user',
+      role: userRole,
       fcmTokens: [],
     });
 

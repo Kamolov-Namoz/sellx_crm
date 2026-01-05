@@ -1,5 +1,5 @@
 // User role type
-export type UserRole = 'admin' | 'user';
+export type UserRole = 'admin' | 'user' | 'developer';
 
 // Client status type
 export type ClientStatus = 'new' | 'thinking' | 'agreed' | 'rejected' | 'callback';
@@ -43,6 +43,22 @@ export interface Client {
   updatedAt: string;
 }
 
+// Milestone (Bosqich) type
+export type MilestoneStatus = 'pending' | 'in_progress' | 'completed' | 'paid';
+
+export interface Milestone {
+  _id?: string;
+  title: string;
+  description?: string;
+  amount: number;
+  percentage: number;
+  dueDate?: string;
+  status: MilestoneStatus;
+  completedAt?: string;
+  paidAt?: string;
+  tasks?: string[];
+}
+
 // Project type (Loyiha)
 export interface Project {
   _id: string;
@@ -53,6 +69,8 @@ export interface Project {
   amount?: number;
   status: ProjectStatus;
   progress?: number;
+  milestones?: Milestone[];
+  totalPaid?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -93,6 +111,7 @@ export interface RegisterCredentials {
   phoneNumber: string;
   password: string;
   confirmPassword: string;
+  role: 'user' | 'developer'; // Seller yoki Dasturchi
 }
 
 export interface AuthResponse {
@@ -200,6 +219,22 @@ export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
 // Aliases for backward compatibility
 export const ORDER_STATUS_COLORS = PROJECT_STATUS_COLORS;
 export const ORDER_STATUS_LABELS = PROJECT_STATUS_LABELS;
+
+// Milestone status colors
+export const MILESTONE_STATUS_COLORS: Record<MilestoneStatus, string> = {
+  pending: 'bg-gray-500/20 text-gray-400',
+  in_progress: 'bg-blue-500/20 text-blue-400',
+  completed: 'bg-green-500/20 text-green-400',
+  paid: 'bg-purple-500/20 text-purple-400',
+};
+
+// Milestone status labels (Uzbek)
+export const MILESTONE_STATUS_LABELS: Record<MilestoneStatus, string> = {
+  pending: 'Kutilmoqda',
+  in_progress: 'Jarayonda',
+  completed: 'Bajarildi',
+  paid: 'To\'landi',
+};
 
 // Conversation type labels
 export const CONVERSATION_TYPE_LABELS: Record<ConversationType, string> = {

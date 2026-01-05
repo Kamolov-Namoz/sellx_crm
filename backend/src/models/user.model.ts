@@ -3,7 +3,7 @@ import { IUser, UserRole } from '../types';
 
 export interface UserDocument extends Omit<IUser, '_id'>, Document {}
 
-const USER_ROLES: UserRole[] = ['admin', 'user'];
+const USER_ROLES: UserRole[] = ['admin', 'user', 'developer'];
 
 const userSchema = new Schema<UserDocument>(
   {

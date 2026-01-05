@@ -14,10 +14,80 @@ router.get('/project/:projectId', auth_middleware_1.authMiddleware, async (req, 
         res.status(500).json({ success: false, message: 'Xatolik yuz berdi' });
     }
 });
-// Xodimning vazifalari
-router.get('/employee/:employeeId', auth_middleware_1.authMiddleware, async (req, res) => {
+// Developer uchun o'z vazifalari
+router.get('/my-tasks', auth_middleware_1.authMiddleware, async (req, res) => {
     try {
-        const tasks = await projectTask_service_1.projectTaskService.getByEmployee(req.params.employeeId);
+        if (req.user?.role !== 'developer') {
+            res.status(403).json({ success: false, message: 'Faqat dasturchilar uchun' });
+            return;
+        }
+        const tasks = await projectTask_service_1.projectTaskService.getByDeveloper(req.user.userId);
+        res.json({ success: true, data: tasks });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: 'Xatolik yuz berdi' });
+    }
+});
+// Developer statistikasi
+router.get('/my-stats', auth_middleware_1.authMiddleware, async (req, res) => {
+    try {
+        if (req.user?.role !== 'developer') {
+            res.status(403).json({ success: false, message: 'Faqat dasturchilar uchun' });
+            return;
+        }
+        const stats = await projectTask_service_1.projectTaskService.getDeveloperStats(req.user.userId);
+        res.json({ success: true, data: stats });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: 'Xatolik yuz berdi' });
+    }
+});
+// Developer loyihalari
+router.get('/my-projects', auth_middleware_1.authMiddleware, async (req, res) => {
+    try {
+        if (req.user?.role !== 'developer') {
+            res.status(403).json({ success: false, message: 'Faqat dasturchilar uchun' });
+            return;
+        }
+        const projects = await projectTask_service_1.projectTaskService.getDeveloperProjects(req.user.userId);
+        res.json({ success: true, data: projects });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: 'Xatolik yuz berdi' });
+    }
+});
+// Developer portfolio
+router.get('/my-portfolio', auth_middleware_1.authMiddleware, async (req, res) => {
+    try {
+        if (req.user?.role !== 'developer') {
+            res.status(403).json({ success: false, message: 'Faqat dasturchilar uchun' });
+            return;
+        }
+        const portfolio = await projectTask_service_1.projectTaskService.getDeveloperPortfolio(req.user.userId);
+        res.json({ success: true, data: portfolio });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: 'Xatolik yuz berdi' });
+    }
+});
+// Vazifani tasdiqlash (Accept) - developer bajarib bo'lganda
+router.post('/:id/accept', auth_middleware_1.authMiddleware, async (req, res) => {
+    try {
+        if (req.user?.role !== 'developer') {
+            res.status(403).json({ success: false, message: 'Faqat dasturchilar uchun' });
+            return;
+        }
+        const task = await projectTask_service_1.projectTaskService.acceptTask(req.params.id, req.user.userId);
+        res.json({ success: true, data: task });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: 'Xatolik yuz berdi' });
+    }
+});
+// Dasturchining vazifalari (admin/seller ko'rishi uchun)
+router.get('/developer/:developerId', auth_middleware_1.authMiddleware, async (req, res) => {
+    try {
+        const tasks = await projectTask_service_1.projectTaskService.getByDeveloper(req.params.developerId);
         res.json({ success: true, data: tasks });
     }
     catch (error) {
@@ -34,7 +104,7 @@ router.post('/', auth_middleware_1.authMiddleware, async (req, res) => {
         res.status(500).json({ success: false, message: 'Xatolik yuz berdi' });
     }
 });
-// Vazifani yangilash (progress)
+// Vazifani yangilash (progress) - developer o'zi yangilashi mumkin
 router.put('/:id', auth_middleware_1.authMiddleware, async (req, res) => {
     try {
         const task = await projectTask_service_1.projectTaskService.update(req.params.id, req.body);

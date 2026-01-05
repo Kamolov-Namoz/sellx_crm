@@ -13,6 +13,7 @@ interface FormErrors {
   phoneNumber?: string;
   password?: string;
   confirmPassword?: string;
+  role?: string;
 }
 
 export default function RegisterPage() {
@@ -22,6 +23,7 @@ export default function RegisterPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState<'user' | 'developer'>('user');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -90,7 +92,7 @@ export default function RegisterPage() {
 
     setIsLoading(true);
     try {
-      await register({ firstName, lastName, username, phoneNumber, password, confirmPassword });
+      await register({ firstName, lastName, username, phoneNumber, password, confirmPassword, role });
       toast.success('Muvaffaqiyatli ro\'yxatdan o\'tdingiz!');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Xatolik yuz berdi';
@@ -127,6 +129,49 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4">
+          {/* Role tanlash */}
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">
+              Ro'lingizni tanlang
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setRole('user')}
+                className={`p-4 rounded-xl border-2 transition-all ${
+                  role === 'user'
+                    ? 'border-primary-500 bg-primary-500/10 text-primary-400'
+                    : 'border-gray-700 bg-gray-800/50 text-gray-400 hover:border-gray-600'
+                }`}
+              >
+                <div className="flex flex-col items-center gap-2">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                  <span className="font-medium">Seller</span>
+                  <span className="text-xs opacity-70">Savdogar</span>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole('developer')}
+                className={`p-4 rounded-xl border-2 transition-all ${
+                  role === 'developer'
+                    ? 'border-primary-500 bg-primary-500/10 text-primary-400'
+                    : 'border-gray-700 bg-gray-800/50 text-gray-400 hover:border-gray-600'
+                }`}
+              >
+                <div className="flex flex-col items-center gap-2">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                  <span className="font-medium">Dasturchi</span>
+                  <span className="text-xs opacity-70">Developer</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <input

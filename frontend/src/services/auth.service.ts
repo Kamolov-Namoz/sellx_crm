@@ -24,6 +24,7 @@ export const authService = {
         username: credentials.username,
         phoneNumber: credentials.phoneNumber,
         password: credentials.password,
+        role: credentials.role,
       });
       return response.data;
     } catch (error: unknown) {

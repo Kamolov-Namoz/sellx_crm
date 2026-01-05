@@ -1,6 +1,6 @@
 import { Request } from 'express';
 import { Types } from 'mongoose';
-export type UserRole = 'admin' | 'user';
+export type UserRole = 'admin' | 'user' | 'developer';
 export type ClientStatus = 'new' | 'thinking' | 'agreed' | 'rejected' | 'callback';
 export type OrderStatus = 'new' | 'in_progress' | 'completed';
 export type ConversationType = 'text' | 'audio' | 'image' | 'video';
@@ -77,6 +77,7 @@ export interface RegisterRequest {
     username: string;
     phoneNumber: string;
     password: string;
+    role?: 'user' | 'developer';
 }
 export interface LoginRequest {
     username: string;
@@ -116,12 +117,22 @@ export interface UpdateClientRequest {
     status?: ClientStatus;
     followUpDate?: string | null;
 }
+export interface MilestoneInput {
+    title: string;
+    description?: string;
+    amount: number;
+    percentage: number;
+    dueDate?: string;
+    status?: 'pending' | 'in_progress' | 'completed' | 'paid';
+    tasks?: string[];
+}
 export interface CreateOrderRequest {
     clientId: string;
     title: string;
     description?: string;
     amount?: number;
     status?: OrderStatus;
+    milestones?: MilestoneInput[];
 }
 export interface UpdateOrderRequest {
     title?: string;

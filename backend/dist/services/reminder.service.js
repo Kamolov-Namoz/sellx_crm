@@ -71,10 +71,16 @@ class ReminderService {
                 if (!client || !user) {
                     throw new Error('Client or user not found');
                 }
-                // Send notification
-                await notification_service_1.notificationService.sendFollowUpNotification(user._id.toString(), user.fcmTokens, {
-                    clientId: client._id.toString(),
-                    clientName: client.fullName,
+                // Create notification in database
+                await notification_service_1.notificationService.create({
+                    userId: user._id.toString(),
+                    type: 'project_update',
+                    title: `Eslatma: ${client.fullName}`,
+                    message: 'Mijoz bilan bog\'lanish vaqti keldi',
+                    data: {
+                        senderId: client._id.toString(),
+                        senderName: client.fullName,
+                    },
                 });
                 // Mark reminder as sent
                 await models_1.ScheduledReminder.updateOne({ _id: reminder._id }, { status: 'sent' });

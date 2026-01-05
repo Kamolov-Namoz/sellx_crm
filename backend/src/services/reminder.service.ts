@@ -86,15 +86,17 @@ export class ReminderService {
             throw new Error('Client or user not found');
           }
 
-          // Send notification
-          await notificationService.sendFollowUpNotification(
-            user._id.toString(),
-            user.fcmTokens,
-            {
-              clientId: client._id.toString(),
-              clientName: client.fullName,
-            }
-          );
+          // Create notification in database
+          await notificationService.create({
+            userId: user._id.toString(),
+            type: 'project_update',
+            title: `Eslatma: ${client.fullName}`,
+            message: 'Mijoz bilan bog\'lanish vaqti keldi',
+            data: {
+              senderId: client._id.toString(),
+              senderName: client.fullName,
+            },
+          });
 
           // Mark reminder as sent
           await ScheduledReminder.updateOne(

@@ -246,4 +246,36 @@ router.delete(
   }
 );
 
+/**
+ * PATCH /api/orders/:id/milestones/:milestoneId
+ * Update milestone status
+ */
+router.patch(
+  '/:id/milestones/:milestoneId',
+  [
+    param('id').isMongoId().withMessage('Valid order ID is required'),
+    param('milestoneId').isMongoId().withMessage('Valid milestone ID is required'),
+    body('status')
+      .isIn(['pending', 'in_progress', 'completed', 'paid'])
+      .withMessage('Status must be one of: pending, in_progress, completed, paid'),
+  ],
+  validateRequest,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const order = await orderService.updateMilestoneStatus(
+        req.user!.userId,
+        req.params.id,
+        req.params.milestoneId,
+        req.body.status
+      );
+      res.json({
+        success: true,
+        data: order,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 export default router;

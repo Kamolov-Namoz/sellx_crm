@@ -1,11 +1,21 @@
 import mongoose, { Document } from 'mongoose';
 export interface IProjectTask extends Document {
     projectId: mongoose.Types.ObjectId;
-    employeeId: mongoose.Types.ObjectId;
+    developerId: mongoose.Types.ObjectId;
     title: string;
     description?: string;
+    attachments?: {
+        type: 'audio' | 'video' | 'image';
+        url: string;
+        fileName?: string;
+        fileSize?: number;
+        duration?: number;
+        mimeType?: string;
+    }[];
     progress: number;
     status: 'pending' | 'in_progress' | 'completed';
+    isAccepted: boolean;
+    acceptedAt?: Date;
     dueDate?: Date;
     createdAt: Date;
     updatedAt: Date;

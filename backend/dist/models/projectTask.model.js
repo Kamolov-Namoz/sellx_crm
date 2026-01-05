@@ -37,14 +37,24 @@ exports.ProjectTask = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const projectTaskSchema = new mongoose_1.Schema({
     projectId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Order', required: true },
-    employeeId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Employee', required: true },
+    developerId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true },
     description: { type: String },
+    attachments: [{
+            type: { type: String, enum: ['audio', 'video', 'image'] },
+            url: String,
+            fileName: String,
+            fileSize: Number,
+            duration: Number,
+            mimeType: String,
+        }],
     progress: { type: Number, default: 0, min: 0, max: 100 },
     status: { type: String, enum: ['pending', 'in_progress', 'completed'], default: 'pending' },
+    isAccepted: { type: Boolean, default: false },
+    acceptedAt: { type: Date },
     dueDate: { type: Date },
 }, { timestamps: true });
 projectTaskSchema.index({ projectId: 1 });
-projectTaskSchema.index({ employeeId: 1 });
+projectTaskSchema.index({ developerId: 1 });
 exports.ProjectTask = mongoose_1.default.model('ProjectTask', projectTaskSchema);
 //# sourceMappingURL=projectTask.model.js.map

@@ -36,6 +36,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Order = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const ORDER_STATUSES = ['new', 'in_progress', 'completed'];
+const milestoneSchema = new mongoose_1.Schema({
+    title: { type: String, required: true },
+    description: { type: String },
+    amount: { type: Number, required: true, min: 0 },
+    percentage: { type: Number, required: true, min: 0, max: 100 },
+    dueDate: { type: Date },
+    status: {
+        type: String,
+        enum: ['pending', 'in_progress', 'completed', 'paid'],
+        default: 'pending'
+    },
+    completedAt: { type: Date },
+    paidAt: { type: Date },
+    tasks: [{ type: String }],
+}, { _id: true });
 const orderSchema = new mongoose_1.Schema({
     userId: {
         type: mongoose_1.Schema.Types.ObjectId,
@@ -78,6 +93,12 @@ const orderSchema = new mongoose_1.Schema({
         default: 0,
         min: 0,
         max: 100,
+    },
+    milestones: [milestoneSchema],
+    totalPaid: {
+        type: Number,
+        default: 0,
+        min: 0,
     },
 }, {
     timestamps: true,

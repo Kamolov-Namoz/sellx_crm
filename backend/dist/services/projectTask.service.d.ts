@@ -11,11 +11,35 @@ export declare class ProjectTaskService {
     }> & {
         __v: number;
     })[]>;
-    getByEmployee(employeeId: string): Promise<(import("mongoose").Document<unknown, {}, IProjectTask, {}, {}> & IProjectTask & Required<{
+    getByDeveloper(developerId: string): Promise<(import("mongoose").Document<unknown, {}, IProjectTask, {}, {}> & IProjectTask & Required<{
         _id: Types.ObjectId;
     }> & {
         __v: number;
     })[]>;
+    getDeveloperProjects(developerId: string): Promise<any[]>;
+    getDeveloperStats(developerId: string): Promise<{
+        totalTasks: number;
+        completedTasks: number;
+        inProgressTasks: number;
+        pendingTasks: number;
+        avgProgress: number;
+        totalProjects: number;
+        completedProjects: number;
+    }>;
+    getDeveloperPortfolio(developerId: string): Promise<{
+        _id: Types.ObjectId;
+        title: string;
+        description: string | undefined;
+        project: Types.ObjectId;
+        completedAt: Date | undefined;
+        daysToComplete: number;
+        createdAt: Date;
+    }[]>;
+    acceptTask(taskId: string, developerId: string): Promise<import("mongoose").Document<unknown, {}, IProjectTask, {}, {}> & IProjectTask & Required<{
+        _id: Types.ObjectId;
+    }> & {
+        __v: number;
+    }>;
     update(id: string, data: Partial<IProjectTask>): Promise<(import("mongoose").Document<unknown, {}, IProjectTask, {}, {}> & IProjectTask & Required<{
         _id: Types.ObjectId;
     }> & {

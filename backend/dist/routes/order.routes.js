@@ -202,5 +202,27 @@ router.delete('/:id', (0, express_validator_1.param)('id').isMongoId().withMessa
         next(error);
     }
 });
+/**
+ * PATCH /api/orders/:id/milestones/:milestoneId
+ * Update milestone status
+ */
+router.patch('/:id/milestones/:milestoneId', [
+    (0, express_validator_1.param)('id').isMongoId().withMessage('Valid order ID is required'),
+    (0, express_validator_1.param)('milestoneId').isMongoId().withMessage('Valid milestone ID is required'),
+    (0, express_validator_1.body)('status')
+        .isIn(['pending', 'in_progress', 'completed', 'paid'])
+        .withMessage('Status must be one of: pending, in_progress, completed, paid'),
+], validateRequest, async (req, res, next) => {
+    try {
+        const order = await order_service_1.orderService.updateMilestoneStatus(req.user.userId, req.params.id, req.params.milestoneId, req.body.status);
+        res.json({
+            success: true,
+            data: order,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
 exports.default = router;
 //# sourceMappingURL=order.routes.js.map

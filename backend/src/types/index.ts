@@ -2,7 +2,7 @@ import { Request } from 'express';
 import { Types } from 'mongoose';
 
 // User role enum
-export type UserRole = 'admin' | 'user';
+export type UserRole = 'admin' | 'user' | 'developer';
 
 // Client status enum
 export type ClientStatus = 'new' | 'thinking' | 'agreed' | 'rejected' | 'callback';
@@ -97,6 +97,7 @@ export interface RegisterRequest {
   username: string;
   phoneNumber: string;
   password: string;
+  role?: 'user' | 'developer'; // Faqat user yoki developer tanlash mumkin
 }
 
 export interface LoginRequest {
@@ -142,6 +143,17 @@ export interface UpdateClientRequest {
   followUpDate?: string | null;
 }
 
+// Milestone type
+export interface MilestoneInput {
+  title: string;
+  description?: string;
+  amount: number;
+  percentage: number;
+  dueDate?: string;
+  status?: 'pending' | 'in_progress' | 'completed' | 'paid';
+  tasks?: string[];
+}
+
 // Order request types
 export interface CreateOrderRequest {
   clientId: string;
@@ -149,6 +161,7 @@ export interface CreateOrderRequest {
   description?: string;
   amount?: number;
   status?: OrderStatus;
+  milestones?: MilestoneInput[];
 }
 
 export interface UpdateOrderRequest {

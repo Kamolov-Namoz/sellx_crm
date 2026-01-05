@@ -1,9 +1,45 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { IOrder, OrderStatus } from '../types';
 
-export interface OrderDocument extends Omit<IOrder, '_id'>, Document {}
+// Bosqich (Milestone) interfeysi
+export interface IMilestone {
+  _id?: mongoose.Types.ObjectId;
+  title: string; // Bosqich nomi (masalan: "Avans", "Dizayn", "Yakuniy to'lov")
+  description?: string; // Bajariladigan ishlar tavsifi
+  amount: number; // Bu bosqichdagi to'lov miqdori
+  percentage: number; // Umumiy summadan foiz (masalan: 30%)
+  dueDate?: Date; // Tugash muddati
+  status: 'pending' | 'in_progress' | 'completed' | 'paid';
+  completedAt?: Date;
+  paidAt?: Date;
+  tasks?: string[]; // Bu bosqichdagi vazifalar ro'yxati
+}
+
+export interface OrderDocument extends Omit<IOrder, '_id'>, Document {
+  milestones?: IMilestone[];
+  totalPaid?: number;
+}
 
 const ORDER_STATUSES: OrderStatus[] = ['new', 'in_progress', 'completed'];
+
+const milestoneSchema = new Schema<IMilestone>(
+  {
+    title: { type: String, required: true },
+    description: { type: String },
+    amount: { type: Number, required: true, min: 0 },
+    percentage: { type: Number, required: true, min: 0, max: 100 },
+    dueDate: { type: Date },
+    status: { 
+      type: String, 
+      enum: ['pending', 'in_progress', 'completed', 'paid'], 
+      default: 'pending' 
+    },
+    completedAt: { type: Date },
+    paidAt: { type: Date },
+    tasks: [{ type: String }],
+  },
+  { _id: true }
+);
 
 const orderSchema = new Schema<OrderDocument>(
   {
@@ -48,6 +84,12 @@ const orderSchema = new Schema<OrderDocument>(
       default: 0,
       min: 0,
       max: 100,
+    },
+    milestones: [milestoneSchema],
+    totalPaid: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
   },
   {

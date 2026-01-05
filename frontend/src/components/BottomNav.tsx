@@ -1,10 +1,12 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { notificationService } from '@/services/notification.service';
 
-// Oddiy foydalanuvchilar uchun navigatsiya
+// Oddiy foydalanuvchilar (seller) uchun navigatsiya
 const userNavItems = [
   {
     href: '/dashboard',
@@ -35,10 +37,50 @@ const userNavItems = [
   },
   {
     href: '/employees',
-    label: 'Xodimlar',
+    label: 'Dasturchilar',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+      </svg>
+    ),
+  },
+];
+
+// Developer uchun navigatsiya
+const developerNavItems = [
+  {
+    href: '/developer',
+    label: 'Dashboard',
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+      </svg>
+    ),
+  },
+  {
+    href: '/developer/tasks',
+    label: 'Vazifalar',
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+      </svg>
+    ),
+  },
+  {
+    href: '/developer/projects',
+    label: 'Loyihalar',
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg>
+    ),
+  },
+  {
+    href: '/developer/portfolio',
+    label: 'Portfolio',
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
       </svg>
     ),
   },
@@ -95,22 +137,46 @@ const adminNavItems = [
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isDeveloper, user } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const items = isAdmin ? adminNavItems : userNavItems;
+  useEffect(() => {
+    if (user) {
+      loadUnreadCount();
+      // Har 30 sekundda yangilash
+      const interval = setInterval(loadUnreadCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  const loadUnreadCount = async () => {
+    try {
+      const res = await notificationService.getUnreadCount();
+      if (res.success && res.data) {
+        setUnreadCount(res.data.count);
+      }
+    } catch {}
+  };
+
+  const items = isAdmin ? adminNavItems : isDeveloper ? developerNavItems : userNavItems;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-[#17212b] border-t border-[#242f3d] safe-bottom z-40">
       <div className="flex items-center justify-around py-2">
         {items.map((item) => {
           const isActive = pathname === item.href || 
-            (item.href !== '/admin' && pathname.startsWith(item.href + '/')) ||
-            (item.href === '/admin' && pathname === '/admin');
+            (item.href !== '/admin' && item.href !== '/developer' && pathname.startsWith(item.href + '/')) ||
+            (item.href === '/admin' && pathname === '/admin') ||
+            (item.href === '/developer' && pathname === '/developer');
+          
+          // Loyihalar sahifasida notification badge ko'rsatish
+          const showBadge = (item.href === '/developer/projects' || item.href === '/orders') && unreadCount > 0;
+          
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
+              className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors relative ${
                 isActive
                   ? 'text-primary-400'
                   : 'text-gray-500 hover:text-gray-300'
@@ -118,6 +184,11 @@ export default function BottomNav() {
             >
               {item.icon}
               <span className="text-[10px] font-medium">{item.label}</span>
+              {showBadge && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </Link>
           );
         })}

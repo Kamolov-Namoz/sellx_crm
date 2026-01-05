@@ -1,5 +1,5 @@
 import api from './api';
-import { Order, OrderFormData, ApiResponse, OrderStatus, PaginatedResponse } from '@/types';
+import { Order, OrderFormData, ApiResponse, OrderStatus, PaginatedResponse, MilestoneStatus } from '@/types';
 
 export interface GetOrdersParams {
   status?: OrderStatus;
@@ -44,6 +44,18 @@ export const orderService = {
 
   async deleteOrder(id: string): Promise<ApiResponse<void>> {
     const response = await api.delete<ApiResponse<void>>(`/orders/${id}`);
+    return response.data;
+  },
+
+  async updateMilestoneStatus(
+    orderId: string,
+    milestoneId: string,
+    status: MilestoneStatus
+  ): Promise<ApiResponse<Order>> {
+    const response = await api.patch<ApiResponse<Order>>(
+      `/orders/${orderId}/milestones/${milestoneId}`,
+      { status }
+    );
     return response.data;
   },
 };

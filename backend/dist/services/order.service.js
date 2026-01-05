@@ -28,6 +28,8 @@ class OrderService {
             description: data.description,
             amount: data.amount,
             status: data.status || 'new',
+            milestones: data.milestones || [],
+            totalPaid: 0,
         });
         await order.save();
         return order.toObject();
@@ -174,6 +176,54 @@ class OrderService {
                 totalPages: Math.ceil(total / limit),
             },
         };
+    }
+    /**
+     * Update milestone status
+     */
+    async updateMilestoneStatus(userId, orderId, milestoneId, status) {
+        const order = await models_1.Order.findOne({
+            _id: orderId,
+            userId: new mongoose_1.default.Types.ObjectId(userId),
+        });
+        if (!order) {
+            throw new error_middleware_1.AppError('Order not found', 404, 'ORDER_NOT_FOUND');
+        }
+        const milestone = order.milestones?.find((m) => m._id?.toString() === milestoneId);
+        if (!milestone) {
+            throw new error_middleware_1.AppError('Milestone not found', 404, 'MILESTONE_NOT_FOUND');
+        }
+        milestone.status = status;
+        if (status === 'completed') {
+            milestone.completedAt = new Date();
+        }
+        else if (status === 'paid') {
+            milestone.paidAt = new Date();
+            // Update totalPaid
+            const totalPaid = order.milestones
+                ?.filter((m) => m.status === 'paid')
+                .reduce((sum, m) => sum + m.amount, 0) || 0;
+            order.totalPaid = totalPaid + milestone.amount;
+        }
+        // Update order progress based on milestones
+        if (order.milestones && order.milestones.length > 0) {
+            const completedOrPaid = order.milestones.filter((m) => m.status === 'completed' || m.status === 'paid').length;
+            order.progress = Math.round((completedOrPaid / order.milestones.length) * 100);
+        }
+        await order.save();
+        return order.toObject();
+    }
+    /**
+     * Get order with milestones for developer view
+     */
+    async getOrderForDeveloper(orderId) {
+        const order = await models_1.Order.findById(orderId)
+            .populate('clientId', 'fullName companyName phoneNumber')
+            .populate('userId', 'firstName lastName username')
+            .lean();
+        if (!order) {
+            throw new error_middleware_1.AppError('Order not found', 404, 'ORDER_NOT_FOUND');
+        }
+        return order;
     }
 }
 exports.OrderService = OrderService;

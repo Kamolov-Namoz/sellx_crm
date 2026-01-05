@@ -35,7 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.User = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const USER_ROLES = ['admin', 'user'];
+const USER_ROLES = ['admin', 'user', 'developer'];
 const userSchema = new mongoose_1.Schema({
     firstName: {
         type: String,

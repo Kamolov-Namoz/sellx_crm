@@ -1,32 +1,66 @@
-interface FollowUpNotificationData {
-    clientId: string;
-    clientName: string;
-}
+import { Types } from 'mongoose';
 export declare class NotificationService {
-    /**
-     * Register push subscription for a user (Web Push uchun)
-     */
+    create(data: {
+        userId: string;
+        type: 'chat_message' | 'new_task' | 'task_completed' | 'project_update';
+        title: string;
+        message: string;
+        data?: {
+            projectId?: string;
+            taskId?: string;
+            senderId?: string;
+            senderName?: string;
+        };
+    }): Promise<import("mongoose").Document<unknown, {}, import("../models").INotification, {}, {}> & import("../models").INotification & Required<{
+        _id: Types.ObjectId;
+    }> & {
+        __v: number;
+    }>;
+    getByUser(userId: string, page?: number, limit?: number): Promise<{
+        notifications: (import("mongoose").FlattenMaps<import("../models").INotification> & Required<{
+            _id: Types.ObjectId;
+        }> & {
+            __v: number;
+        })[];
+        total: number;
+        unreadCount: number;
+        page: number;
+        totalPages: number;
+    }>;
+    getUnreadCount(userId: string): Promise<number>;
+    markAsRead(notificationId: string, userId: string): Promise<(import("mongoose").Document<unknown, {}, import("../models").INotification, {}, {}> & import("../models").INotification & Required<{
+        _id: Types.ObjectId;
+    }> & {
+        __v: number;
+    }) | null>;
+    markAllAsRead(userId: string): Promise<import("mongoose").UpdateWriteOpResult>;
+    notifyChatMessage(data: {
+        projectId: string;
+        projectTitle: string;
+        senderId: string;
+        senderName: string;
+        senderRole: 'user' | 'developer';
+        messagePreview: string;
+    }): Promise<void>;
+    notifyNewTask(data: {
+        projectId: string;
+        projectTitle: string;
+        taskId: string;
+        taskTitle: string;
+        developerId: string;
+        assignedBy: string;
+    }): Promise<void>;
+    notifyTaskCompleted(data: {
+        projectId: string;
+        projectTitle: string;
+        taskId: string;
+        taskTitle: string;
+        developerId: string;
+        developerName: string;
+        sellerId: string;
+    }): Promise<void>;
     registerToken(userId: string, token: string): Promise<void>;
-    /**
-     * Remove push subscription for a user
-     */
     removeToken(userId: string, token: string): Promise<void>;
-    /**
-     * Send follow-up notification (placeholder - frontend handles this now)
-     */
-    sendFollowUpNotification(userId: string, _tokens: string[], data: FollowUpNotificationData): Promise<{
-        success: boolean;
-        message: string;
-        data: FollowUpNotificationData;
-    }>;
-    /**
-     * Send custom notification (placeholder)
-     */
-    sendNotification(_tokens: string[], title: string, body: string, _data?: Record<string, string>): Promise<{
-        success: boolean;
-        message: string;
-    }>;
 }
 export declare const notificationService: NotificationService;
-export {};
 //# sourceMappingURL=notification.service.d.ts.map

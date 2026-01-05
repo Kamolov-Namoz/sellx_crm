@@ -72,6 +72,22 @@ export declare class OrderService {
             totalPages: number;
         };
     }>;
+    /**
+     * Update milestone status
+     */
+    updateMilestoneStatus(userId: string, orderId: string, milestoneId: string, status: 'pending' | 'in_progress' | 'completed' | 'paid'): Promise<import("../models").OrderDocument & Required<{
+        _id: mongoose.Types.ObjectId;
+    }> & {
+        __v: number;
+    }>;
+    /**
+     * Get order with milestones for developer view
+     */
+    getOrderForDeveloper(orderId: string): Promise<mongoose.FlattenMaps<import("../models").OrderDocument> & Required<{
+        _id: mongoose.Types.ObjectId;
+    }> & {
+        __v: number;
+    }>;
 }
 export declare const orderService: OrderService;
 //# sourceMappingURL=order.service.d.ts.map

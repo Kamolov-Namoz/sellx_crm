@@ -3,20 +3,41 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { UserRole } from '@/types';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  requiredRole?: UserRole;
 }
 
-export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+  const { isAuthenticated, isLoading, user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/auth/login');
+      return;
     }
-  }, [isAuthenticated, isLoading, router]);
+
+    // Role-based redirect
+    if (!isLoading && isAuthenticated && user) {
+      // Agar developer bo'lsa va developer sahifasida bo'lmasa
+      if (user.role === 'developer' && !requiredRole) {
+        router.push('/developer');
+        return;
+      }
+      
+      // Agar kerakli rol bor va user roli mos kelmasa
+      if (requiredRole && user.role !== requiredRole && user.role !== 'admin') {
+        if (user.role === 'developer') {
+          router.push('/developer');
+        } else {
+          router.push('/dashboard');
+        }
+      }
+    }
+  }, [isAuthenticated, isLoading, router, user, requiredRole]);
 
   if (isLoading) {
     return (
