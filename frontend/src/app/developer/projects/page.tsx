@@ -109,7 +109,14 @@ export default function DeveloperProjectsPage() {
                   
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-white text-lg">{project.title}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-white text-lg">{project.title}</h3>
+                        {project.isTeamLead && (
+                          <span style={{ backgroundColor: '#f59e0b', color: 'white', padding: '2px 8px', borderRadius: '9999px', fontSize: '10px', fontWeight: 600 }}>
+                            Team Lead
+                          </span>
+                        )}
+                      </div>
                       {getClientName(project) && (
                         <p className="text-sm text-gray-400 mt-1">
                           <span className="text-gray-500">Mijoz:</span> {getClientName(project)}

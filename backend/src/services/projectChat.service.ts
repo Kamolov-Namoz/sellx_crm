@@ -136,10 +136,12 @@ export class ProjectChatService {
   }
 
   // Loyiha ma'lumotlari (chat uchun)
-  async getProjectInfo(projectId: string) {
+  async getProjectInfo(projectId: string, userId?: string) {
     const project = await Order.findById(projectId)
       .populate('clientId', 'fullName companyName')
       .populate('userId', 'firstName lastName')
+      .populate('team.developerId', 'firstName lastName username')
+      .populate('teamLeadId', 'firstName lastName username')
       .lean();
     
     if (!project) return null;
@@ -159,6 +161,27 @@ export class ProjectChatService {
     const completedTasks = tasks.filter(t => t.isAccepted).length;
     const progress = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0;
     
+    // User Team Lead ekanligini tekshirish
+    // teamLeadId populate qilinganda object bo'ladi, qilinmaganda ObjectId bo'ladi
+    let teamLeadIdStr: string | undefined;
+    if (project.teamLeadId) {
+      const teamLead = project.teamLeadId as any;
+      teamLeadIdStr = typeof teamLead === 'object' && teamLead._id
+        ? teamLead._id.toString()
+        : teamLead.toString();
+    }
+    
+    let userIdStr: string | undefined;
+    if (project.userId) {
+      const projectUser = project.userId as any;
+      userIdStr = typeof projectUser === 'object' && projectUser._id
+        ? projectUser._id.toString()
+        : projectUser.toString();
+    }
+    
+    const isTeamLead = userId ? teamLeadIdStr === userId : false;
+    const isSeller = userId ? userIdStr === userId : false;
+    
     return {
       ...project,
       tasks,
@@ -166,6 +189,9 @@ export class ProjectChatService {
       totalTasks: tasks.length,
       completedTasks,
       progress,
+      isTeamLead,
+      isSeller,
+      canManageTasks: isTeamLead || isSeller,
     };
   }
 }

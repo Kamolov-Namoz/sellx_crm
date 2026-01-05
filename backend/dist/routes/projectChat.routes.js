@@ -40,7 +40,7 @@ router.post('/:projectId/messages', auth_middleware_1.authMiddleware, async (req
 // Loyiha ma'lumotlari (chat header uchun)
 router.get('/:projectId/info', auth_middleware_1.authMiddleware, async (req, res) => {
     try {
-        const info = await projectChat_service_1.projectChatService.getProjectInfo(req.params.projectId);
+        const info = await projectChat_service_1.projectChatService.getProjectInfo(req.params.projectId, req.user.userId);
         if (!info) {
             res.status(404).json({ success: false, message: 'Loyiha topilmadi' });
             return;

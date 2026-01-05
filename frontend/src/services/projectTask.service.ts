@@ -37,7 +37,7 @@ export interface ProjectTask {
   description?: string;
   attachments?: TaskAttachment[];
   progress: number;
-  status: 'pending' | 'in_progress' | 'completed';
+  status: 'in_progress' | 'completed';
   isAccepted: boolean;
   acceptedAt?: string;
   dueDate?: string;
@@ -49,7 +49,6 @@ export interface DeveloperStats {
   totalTasks: number;
   completedTasks: number;
   inProgressTasks: number;
-  pendingTasks: number;
   avgProgress: number;
   totalProjects: number;
   completedProjects: number;
@@ -70,6 +69,7 @@ export interface DeveloperProject {
   myTasks: number;
   completedTasks: number;
   myProgress: number;
+  isTeamLead?: boolean;
 }
 
 export interface PortfolioItem {
@@ -184,6 +184,22 @@ export const projectTaskService = {
   
   // Vazifani o'chirish
   delete: async (id: string): Promise<ApiResponse<void>> => {
+    const response = await api.delete<ApiResponse<void>>(`/tasks/${id}`);
+    return response.data;
+  },
+  
+  // Alias metodlar (developer page uchun)
+  createTask: async (data: { projectId: string; title: string; description?: string; developerId: string; milestoneId?: string }): Promise<ApiResponse<ProjectTask>> => {
+    const response = await api.post<ApiResponse<ProjectTask>>('/tasks', data);
+    return response.data;
+  },
+  
+  updateTask: async (id: string, data: { title?: string; description?: string; developerId?: string }): Promise<ApiResponse<ProjectTask>> => {
+    const response = await api.put<ApiResponse<ProjectTask>>(`/tasks/${id}`, data);
+    return response.data;
+  },
+  
+  deleteTask: async (id: string): Promise<ApiResponse<void>> => {
     const response = await api.delete<ApiResponse<void>>(`/tasks/${id}`);
     return response.data;
   },

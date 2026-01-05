@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useToast } from '@/contexts/ToastContext';
-import { orderService } from '@/services/order.service';
+import { orderService, Developer, TeamMember } from '@/services/order.service';
 import { 
   Order, 
   OrderStatus,
@@ -24,6 +24,7 @@ function OrderDetailContent() {
   const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState<Milestone | null>(null);
+  const [showTeamModal, setShowTeamModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const loadOrder = async () => {
@@ -245,6 +246,62 @@ function OrderDetailContent() {
             </div>
           </div>
         )}
+
+        {/* Jamoa */}
+        <div className="bg-dark-800 rounded-xl p-4">
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-white font-semibold">Loyiha jamoasi</h2>
+            <button
+              onClick={() => setShowTeamModal(true)}
+              className="px-3 py-1.5 bg-primary-500/20 text-primary-400 rounded-lg text-sm flex items-center gap-1"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Boshqarish
+            </button>
+          </div>
+
+          {order.team && order.team.length > 0 ? (
+            <div className="space-y-2">
+              {order.team.map((member, index) => (
+                <div 
+                  key={member.developerId?._id || `team-${index}`} 
+                  className={`flex items-center gap-3 p-3 rounded-lg ${
+                    member.role === 'team_lead' ? 'bg-yellow-500/10 border border-yellow-500/30' : 'bg-dark-700'
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    member.role === 'team_lead' ? 'bg-yellow-500/30' : 'bg-primary-500/30'
+                  }`}>
+                    <span className={`text-sm font-medium ${
+                      member.role === 'team_lead' ? 'text-yellow-400' : 'text-primary-400'
+                    }`}>
+                      {member.developerId.firstName?.[0]}{member.developerId.lastName?.[0]}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-white text-sm font-medium">
+                      {member.developerId.firstName} {member.developerId.lastName}
+                    </p>
+                    <p className="text-xs text-gray-500">@{member.developerId.username}</p>
+                  </div>
+                  {member.role === 'team_lead' && (
+                    <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs">
+                      Team Lead
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <div className="text-3xl mb-2">👥</div>
+              <p className="text-gray-400 text-sm">Hali jamoa qo'shilmagan</p>
+              <p className="text-gray-500 text-xs mt-1">"Boshqarish" tugmasini bosing</p>
+            </div>
+          )}
+        </div>
       </main>
 
       {/* Edit Modal */}
@@ -263,6 +320,17 @@ function OrderDetailContent() {
           milestone={editingMilestone}
           onClose={() => setEditingMilestone(null)}
           onSuccess={() => { setEditingMilestone(null); loadOrder(); }}
+        />
+      )}
+
+      {/* Team Management Modal */}
+      {showTeamModal && (
+        <TeamManagementModal
+          orderId={params.id as string}
+          currentTeam={order.team || []}
+          teamLeadId={order.teamLeadId?._id}
+          onClose={() => setShowTeamModal(false)}
+          onSuccess={() => { setShowTeamModal(false); loadOrder(); }}
         />
       )}
     </div>
@@ -643,6 +711,234 @@ function EditMilestoneModal({
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+
+// Team Management Modal
+function TeamManagementModal({ 
+  orderId,
+  currentTeam,
+  teamLeadId,
+  onClose, 
+  onSuccess 
+}: { 
+  orderId: string;
+  currentTeam: { developerId: { _id: string; firstName: string; lastName: string; username: string }; role: string; joinedAt: string }[];
+  teamLeadId?: string;
+  onClose: () => void; 
+  onSuccess: () => void;
+}) {
+  const toast = useToast();
+  const [allDevelopers, setAllDevelopers] = useState<Developer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showAddDev, setShowAddDev] = useState(false);
+
+  useEffect(() => {
+    loadDevelopers();
+  }, []);
+
+  const loadDevelopers = async () => {
+    try {
+      const res = await orderService.getDevelopers();
+      if (res.success && res.data) {
+        setAllDevelopers(res.data);
+      }
+    } catch {
+      toast.error('Xatolik');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddMember = async (developerId: string) => {
+    setSaving(true);
+    try {
+      await orderService.addTeamMember(orderId, developerId);
+      toast.success('Dasturchi qo\'shildi');
+      onSuccess();
+    } catch {
+      toast.error('Xatolik');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRemoveMember = async (developerId: string) => {
+    if (!confirm('Dasturchini jamoadan olib tashlamoqchimisiz?')) return;
+    setSaving(true);
+    try {
+      await orderService.removeTeamMember(orderId, developerId);
+      toast.success('Dasturchi olib tashlandi');
+      onSuccess();
+    } catch {
+      toast.error('Xatolik');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSetTeamLead = async (developerId: string) => {
+    setSaving(true);
+    try {
+      await orderService.setTeamLead(orderId, developerId);
+      toast.success('Team Lead tayinlandi');
+      onSuccess();
+    } catch {
+      toast.error('Xatolik');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Jamoada bo'lmagan dasturchilar
+  const teamMemberIds = currentTeam.map(m => m.developerId._id);
+  const availableDevelopers = allDevelopers.filter(d => !teamMemberIds.includes(d._id));
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
+      <div className="w-full sm:max-w-md max-h-[90vh] overflow-hidden rounded-2xl shadow-2xl" style={{ backgroundColor: '#1e2836' }}>
+        <div className="flex justify-between items-center p-4" style={{ borderBottom: '1px solid #2d3848' }}>
+          <h2 className="text-lg font-semibold text-white">Jamoani boshqarish</h2>
+          <button 
+            onClick={onClose} 
+            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-white transition"
+            style={{ backgroundColor: '#2d3848' }}
+          >
+            ✕
+          </button>
+        </div>
+        
+        <div className="p-4 space-y-4 overflow-y-auto max-h-[70vh]">
+          {/* Joriy jamoa */}
+          <div>
+            <h3 className="text-sm text-gray-400 mb-2">Joriy jamoa ({currentTeam.length})</h3>
+            {currentTeam.length > 0 ? (
+              <div className="space-y-2">
+                {currentTeam.map((member) => (
+                  <div 
+                    key={member.developerId._id} 
+                    className={`flex items-center gap-3 p-3 rounded-xl ${
+                      member.role === 'team_lead' ? 'bg-yellow-500/10 border border-yellow-500/30' : ''
+                    }`}
+                    style={{ backgroundColor: member.role !== 'team_lead' ? '#2d3848' : undefined }}
+                  >
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      member.role === 'team_lead' ? 'bg-yellow-500/30' : 'bg-primary-500/30'
+                    }`}>
+                      <span className={`text-sm font-medium ${
+                        member.role === 'team_lead' ? 'text-yellow-400' : 'text-primary-400'
+                      }`}>
+                        {member.developerId.firstName?.[0]}{member.developerId.lastName?.[0]}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-white text-sm font-medium">
+                        {member.developerId.firstName} {member.developerId.lastName}
+                      </p>
+                      <p className="text-xs text-gray-500">@{member.developerId.username}</p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {member.role !== 'team_lead' && (
+                        <button
+                          onClick={() => handleSetTeamLead(member.developerId._id)}
+                          disabled={saving}
+                          className="p-2 text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition"
+                          title="Team Lead qilish"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                          </svg>
+                        </button>
+                      )}
+                      {member.role === 'team_lead' && (
+                        <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs mr-1">
+                          Lead
+                        </span>
+                      )}
+                      <button
+                        onClick={() => handleRemoveMember(member.developerId._id)}
+                        disabled={saving}
+                        className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition"
+                        title="Olib tashlash"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-sm text-center py-4">Jamoa bo'sh</p>
+            )}
+          </div>
+
+          {/* Dasturchi qo'shish */}
+          <div>
+            <button
+              onClick={() => setShowAddDev(!showAddDev)}
+              className="w-full flex items-center justify-between p-3 rounded-xl text-sm"
+              style={{ backgroundColor: '#2d3848' }}
+            >
+              <span className="text-primary-400 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Dasturchi qo'shish
+              </span>
+              <svg className={`w-4 h-4 text-gray-400 transition ${showAddDev ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            
+            {showAddDev && (
+              <div className="mt-2 space-y-1 max-h-48 overflow-y-auto">
+                {loading ? (
+                  <div className="flex justify-center py-4">
+                    <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : availableDevelopers.length > 0 ? (
+                  availableDevelopers.map(dev => (
+                    <button
+                      key={dev._id}
+                      onClick={() => handleAddMember(dev._id)}
+                      disabled={saving}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-primary-500/10 transition"
+                      style={{ backgroundColor: '#3a4556' }}
+                    >
+                      <div className="w-8 h-8 bg-gray-500/30 rounded-full flex items-center justify-center">
+                        <span className="text-gray-400 text-xs">{dev.firstName?.[0]}{dev.lastName?.[0]}</span>
+                      </div>
+                      <div className="text-left flex-1">
+                        <p className="text-white text-sm">{dev.firstName} {dev.lastName}</p>
+                        <p className="text-xs text-gray-500">@{dev.username}</p>
+                      </div>
+                      <svg className="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm text-center py-4">Barcha dasturchilar jamoada</p>
+                )}
+              </div>
+            )}
+          </div>
+          
+          {/* Close button */}
+          <button 
+            onClick={onClose} 
+            className="w-full py-3 rounded-xl text-white font-medium hover:opacity-80 transition"
+            style={{ backgroundColor: '#2d3848' }}
+          >
+            Yopish
+          </button>
+        </div>
       </div>
     </div>
   );

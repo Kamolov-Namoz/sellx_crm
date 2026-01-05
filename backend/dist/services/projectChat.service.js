@@ -108,10 +108,12 @@ class ProjectChatService {
         return counts;
     }
     // Loyiha ma'lumotlari (chat uchun)
-    async getProjectInfo(projectId) {
+    async getProjectInfo(projectId, userId) {
         const project = await models_1.Order.findById(projectId)
             .populate('clientId', 'fullName companyName')
             .populate('userId', 'firstName lastName')
+            .populate('team.developerId', 'firstName lastName username')
+            .populate('teamLeadId', 'firstName lastName username')
             .lean();
         if (!project)
             return null;
@@ -125,6 +127,24 @@ class ProjectChatService {
                 .map(t => [t.developerId._id.toString(), t.developerId])).values()];
         const completedTasks = tasks.filter(t => t.isAccepted).length;
         const progress = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0;
+        // User Team Lead ekanligini tekshirish
+        // teamLeadId populate qilinganda object bo'ladi, qilinmaganda ObjectId bo'ladi
+        let teamLeadIdStr;
+        if (project.teamLeadId) {
+            const teamLead = project.teamLeadId;
+            teamLeadIdStr = typeof teamLead === 'object' && teamLead._id
+                ? teamLead._id.toString()
+                : teamLead.toString();
+        }
+        let userIdStr;
+        if (project.userId) {
+            const projectUser = project.userId;
+            userIdStr = typeof projectUser === 'object' && projectUser._id
+                ? projectUser._id.toString()
+                : projectUser.toString();
+        }
+        const isTeamLead = userId ? teamLeadIdStr === userId : false;
+        const isSeller = userId ? userIdStr === userId : false;
         return {
             ...project,
             tasks,
@@ -132,6 +152,9 @@ class ProjectChatService {
             totalTasks: tasks.length,
             completedTasks,
             progress,
+            isTeamLead,
+            isSeller,
+            canManageTasks: isTeamLead || isSeller,
         };
     }
 }

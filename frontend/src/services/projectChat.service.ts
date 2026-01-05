@@ -67,8 +67,24 @@ export interface ProjectInfo {
     companyName?: string;
   };
   userId?: {
+    _id: string;
     firstName: string;
     lastName: string;
+  };
+  team?: Array<{
+    developerId: {
+      _id: string;
+      firstName: string;
+      lastName: string;
+      username: string;
+    };
+    addedAt: string;
+  }>;
+  teamLeadId?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    username: string;
   };
   tasks: Array<{
     _id: string;
@@ -83,6 +99,7 @@ export interface ProjectInfo {
       lastName: string;
       username: string;
     };
+    milestoneId?: string;
   }>;
   developers: Array<{
     _id: string;
@@ -92,6 +109,9 @@ export interface ProjectInfo {
   }>;
   totalTasks: number;
   completedTasks: number;
+  isTeamLead?: boolean;
+  isSeller?: boolean;
+  canManageTasks?: boolean;
 }
 
 export interface MessagesResponse {

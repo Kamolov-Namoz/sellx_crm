@@ -31,7 +31,7 @@ export declare class ProjectChatService {
     markAsRead(projectId: string, userId: string): Promise<void>;
     getUnreadCount(projectId: string, userId: string): Promise<number>;
     getDeveloperUnreadCounts(developerId: string): Promise<any[]>;
-    getProjectInfo(projectId: string): Promise<{
+    getProjectInfo(projectId: string, userId?: string): Promise<{
         tasks: (import("mongoose").FlattenMaps<import("../models").IProjectTask> & Required<{
             _id: Types.ObjectId;
         }> & {
@@ -41,8 +41,13 @@ export declare class ProjectChatService {
         totalTasks: number;
         completedTasks: number;
         progress: number;
+        isTeamLead: boolean;
+        isSeller: boolean;
+        canManageTasks: boolean;
         milestones?: import("mongoose").FlattenMaps<import("../models/order.model").IMilestone>[] | undefined;
         totalPaid?: number | undefined;
+        team?: import("mongoose").FlattenMaps<import("../models/order.model").ITeamMember>[] | undefined;
+        teamLeadId?: Types.ObjectId | undefined;
         createdAt: Date;
         amount?: number | undefined;
         updatedAt: Date;

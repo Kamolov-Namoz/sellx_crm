@@ -3,6 +3,11 @@ import { ProjectTask, IProjectTask, Order } from '../models';
 import { notificationService } from './notification.service';
 
 export class ProjectTaskService {
+  // Vazifani ID bo'yicha olish
+  async getById(id: string) {
+    return ProjectTask.findById(id);
+  }
+
   async create(data: Partial<IProjectTask>) {
     const task = new ProjectTask({
       ...data,
@@ -99,7 +104,7 @@ export class ProjectTaskService {
     const tasks = await ProjectTask.find({ developerId: new Types.ObjectId(developerId) })
       .populate({
         path: 'projectId',
-        select: 'title status clientId amount description createdAt progress',
+        select: 'title status clientId amount description createdAt progress teamLeadId',
         populate: {
           path: 'clientId',
           select: 'fullName companyName'
@@ -117,11 +122,22 @@ export class ProjectTaskService {
         const completedTasks = projectTasks.filter(t => t.isAccepted).length;
         const totalTasks = projectTasks.length;
         
+        // Team Lead ekanligini tekshirish
+        // teamLeadId populate qilingan yoki qilinmagan bo'lishi mumkin
+        let teamLeadIdStr: string | undefined;
+        if (project.teamLeadId) {
+          teamLeadIdStr = typeof project.teamLeadId === 'object' && '_id' in project.teamLeadId
+            ? (project.teamLeadId as any)._id.toString()
+            : project.teamLeadId.toString();
+        }
+        const isTeamLead = teamLeadIdStr === developerId;
+        
         projectMap.set(project._id.toString(), {
           ...project.toObject(),
           myTasks: totalTasks,
           completedTasks,
           myProgress: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
+          isTeamLead,
         });
       }
     });
@@ -137,7 +153,6 @@ export class ProjectTaskService {
     const totalTasks = tasks.length;
     const completedTasks = tasks.filter(t => t.isAccepted).length;
     const inProgressTasks = tasks.filter(t => t.status === 'in_progress' && !t.isAccepted).length;
-    const pendingTasks = tasks.filter(t => t.status === 'pending').length;
     
     // Unique loyihalar
     const uniqueProjects = new Set(tasks.map(t => t.projectId?.toString()).filter(Boolean));
@@ -153,7 +168,6 @@ export class ProjectTaskService {
       totalTasks,
       completedTasks,
       inProgressTasks,
-      pendingTasks,
       avgProgress,
       totalProjects: uniqueProjects.size,
       completedProjects: completedProjects.size,
@@ -263,21 +277,28 @@ export class ProjectTaskService {
     return task;
   }
 
-  // Loyihaning umumiy progressini hisoblash
+  // Loyihaning umumiy progressini hisoblash va statusini yangilash
   async updateProjectProgress(projectId: string) {
     const tasks = await ProjectTask.find({ projectId: new Types.ObjectId(projectId) });
     
-    if (tasks.length === 0) return;
+    // Agar vazifa yo'q bo'lsa, loyiha jarayonda
+    if (tasks.length === 0) {
+      await Order.findByIdAndUpdate(projectId, {
+        progress: 0,
+        status: 'in_progress',
+      });
+      return;
+    }
     
     const acceptedTasks = tasks.filter(t => t.isAccepted).length;
     const avgProgress = Math.round((acceptedTasks / tasks.length) * 100);
     
-    // Agar barcha vazifalar tasdiqlangan bo'lsa, loyihani completed qilish
-    const allAccepted = tasks.every(task => task.isAccepted);
+    // Agar barcha vazifalar tasdiqlangan bo'lsa - completed, aks holda - in_progress
+    const allAccepted = tasks.length > 0 && tasks.every(task => task.isAccepted);
     
     await Order.findByIdAndUpdate(projectId, {
       progress: avgProgress,
-      ...(allAccepted && { status: 'completed' }),
+      status: allAccepted ? 'completed' : 'in_progress',
     });
   }
 

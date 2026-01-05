@@ -1,6 +1,11 @@
 import { Types } from 'mongoose';
 import { IProjectTask } from '../models';
 export declare class ProjectTaskService {
+    getById(id: string): Promise<(import("mongoose").Document<unknown, {}, IProjectTask, {}, {}> & IProjectTask & Required<{
+        _id: Types.ObjectId;
+    }> & {
+        __v: number;
+    }) | null>;
     create(data: Partial<IProjectTask>): Promise<import("mongoose").Document<unknown, {}, IProjectTask, {}, {}> & IProjectTask & Required<{
         _id: Types.ObjectId;
     }> & {
@@ -37,7 +42,6 @@ export declare class ProjectTaskService {
         totalTasks: number;
         completedTasks: number;
         inProgressTasks: number;
-        pendingTasks: number;
         avgProgress: number;
         totalProjects: number;
         completedProjects: number;

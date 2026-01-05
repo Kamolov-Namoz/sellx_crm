@@ -26,7 +26,7 @@ const validateRequest = (req, _res, next) => {
     }
     next();
 };
-const VALID_STATUSES = ['new', 'in_progress', 'completed'];
+const VALID_STATUSES = ['in_progress', 'completed'];
 // Create order validation
 const createOrderValidation = [
     (0, express_validator_1.body)('clientId')
@@ -245,6 +245,125 @@ router.patch('/:id/milestones/:milestoneId', [
 ], validateRequest, async (req, res, next) => {
     try {
         const order = await order_service_1.orderService.updateMilestoneStatus(req.user.userId, req.params.id, req.params.milestoneId, req.body.status);
+        res.json({
+            success: true,
+            data: order,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+/**
+ * PUT /api/orders/:id/milestones/:milestoneId
+ * Update milestone details
+ */
+router.put('/:id/milestones/:milestoneId', [
+    (0, express_validator_1.param)('id').isMongoId().withMessage('Valid order ID is required'),
+    (0, express_validator_1.param)('milestoneId').isMongoId().withMessage('Valid milestone ID is required'),
+    (0, express_validator_1.body)('title').optional().trim().isLength({ min: 1, max: 200 }),
+    (0, express_validator_1.body)('description').optional().trim(),
+    (0, express_validator_1.body)('amount').optional().isFloat({ min: 0 }),
+    (0, express_validator_1.body)('percentage').optional().isFloat({ min: 0, max: 100 }),
+    (0, express_validator_1.body)('dueDate').optional(),
+    (0, express_validator_1.body)('tasks').optional().isArray(),
+], validateRequest, async (req, res, next) => {
+    try {
+        const order = await order_service_1.orderService.updateMilestone(req.user.userId, req.params.id, req.params.milestoneId, req.body);
+        res.json({
+            success: true,
+            data: order,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+/**
+ * DELETE /api/orders/:id/milestones/:milestoneId
+ * Delete milestone
+ */
+router.delete('/:id/milestones/:milestoneId', [
+    (0, express_validator_1.param)('id').isMongoId().withMessage('Valid order ID is required'),
+    (0, express_validator_1.param)('milestoneId').isMongoId().withMessage('Valid milestone ID is required'),
+], validateRequest, async (req, res, next) => {
+    try {
+        const order = await order_service_1.orderService.deleteMilestone(req.user.userId, req.params.id, req.params.milestoneId);
+        res.json({
+            success: true,
+            data: order,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+// ==================== TEAM MANAGEMENT ====================
+/**
+ * GET /api/orders/:id/team
+ * Get project team
+ */
+router.get('/:id/team', (0, express_validator_1.param)('id').isMongoId().withMessage('Valid order ID is required'), validateRequest, async (req, res, next) => {
+    try {
+        const result = await order_service_1.orderService.getTeam(req.params.id);
+        res.json({
+            success: true,
+            data: result,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+/**
+ * POST /api/orders/:id/team
+ * Add developer to project team
+ */
+router.post('/:id/team', [
+    (0, express_validator_1.param)('id').isMongoId().withMessage('Valid order ID is required'),
+    (0, express_validator_1.body)('developerId').isMongoId().withMessage('Valid developer ID is required'),
+    (0, express_validator_1.body)('role').optional().isIn(['developer', 'team_lead']).withMessage('Role must be developer or team_lead'),
+], validateRequest, async (req, res, next) => {
+    try {
+        const order = await order_service_1.orderService.addTeamMember(req.user.userId, req.params.id, req.body.developerId, req.body.role || 'developer');
+        res.status(201).json({
+            success: true,
+            data: order,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+/**
+ * DELETE /api/orders/:id/team/:developerId
+ * Remove developer from project team
+ */
+router.delete('/:id/team/:developerId', [
+    (0, express_validator_1.param)('id').isMongoId().withMessage('Valid order ID is required'),
+    (0, express_validator_1.param)('developerId').isMongoId().withMessage('Valid developer ID is required'),
+], validateRequest, async (req, res, next) => {
+    try {
+        const order = await order_service_1.orderService.removeTeamMember(req.user.userId, req.params.id, req.params.developerId);
+        res.json({
+            success: true,
+            data: order,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+/**
+ * PUT /api/orders/:id/team/lead
+ * Set team lead for project
+ */
+router.put('/:id/team/lead', [
+    (0, express_validator_1.param)('id').isMongoId().withMessage('Valid order ID is required'),
+    (0, express_validator_1.body)('developerId').isMongoId().withMessage('Valid developer ID is required'),
+], validateRequest, async (req, res, next) => {
+    try {
+        const order = await order_service_1.orderService.setTeamLead(req.user.userId, req.params.id, req.body.developerId);
         res.json({
             success: true,
             data: order,

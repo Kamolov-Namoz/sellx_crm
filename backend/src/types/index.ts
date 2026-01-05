@@ -8,7 +8,7 @@ export type UserRole = 'admin' | 'user' | 'developer';
 export type ClientStatus = 'new' | 'thinking' | 'agreed' | 'rejected' | 'callback';
 
 // Order status enum
-export type OrderStatus = 'new' | 'in_progress' | 'completed';
+export type OrderStatus = 'in_progress' | 'completed';
 
 // Conversation type enum
 export type ConversationType = 'text' | 'audio' | 'image' | 'video';

@@ -5,7 +5,7 @@ export type UserRole = 'admin' | 'user' | 'developer';
 export type ClientStatus = 'new' | 'thinking' | 'agreed' | 'rejected' | 'callback';
 
 // Project status type (Loyiha)
-export type ProjectStatus = 'new' | 'in_progress' | 'completed';
+export type ProjectStatus = 'in_progress' | 'completed';
 
 // Conversation type
 export type ConversationType = 'text' | 'audio' | 'image' | 'video';
@@ -59,6 +59,19 @@ export interface Milestone {
   tasks?: string[];
 }
 
+// Team member type
+export interface TeamMember {
+  developerId: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+    phoneNumber?: string;
+  };
+  role: 'developer' | 'team_lead';
+  joinedAt: string;
+}
+
 // Project type (Loyiha)
 export interface Project {
   _id: string;
@@ -71,6 +84,13 @@ export interface Project {
   progress?: number;
   milestones?: Milestone[];
   totalPaid?: number;
+  team?: TeamMember[];
+  teamLeadId?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -204,14 +224,12 @@ export const STATUS_LABELS: Record<ClientStatus, string> = {
 
 // Project status colors (Loyiha)
 export const PROJECT_STATUS_COLORS: Record<ProjectStatus, string> = {
-  new: 'bg-blue-100 text-blue-800',
-  in_progress: 'bg-yellow-100 text-yellow-800',
+  in_progress: 'bg-blue-100 text-blue-800',
   completed: 'bg-green-100 text-green-800',
 };
 
 // Project status labels (Uzbek)
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
-  new: 'Yangi',
   in_progress: 'Jarayonda',
   completed: 'Tugallangan',
 };

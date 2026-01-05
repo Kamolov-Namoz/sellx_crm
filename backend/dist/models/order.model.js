@@ -35,7 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Order = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const ORDER_STATUSES = ['new', 'in_progress', 'completed'];
+const ORDER_STATUSES = ['in_progress', 'completed'];
 const milestoneSchema = new mongoose_1.Schema({
     title: { type: String, required: true },
     description: { type: String },
@@ -51,6 +51,11 @@ const milestoneSchema = new mongoose_1.Schema({
     paidAt: { type: Date },
     tasks: [{ type: String }],
 }, { _id: true });
+const teamMemberSchema = new mongoose_1.Schema({
+    developerId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: true },
+    role: { type: String, enum: ['developer', 'team_lead'], default: 'developer' },
+    joinedAt: { type: Date, default: Date.now },
+}, { _id: false });
 const orderSchema = new mongoose_1.Schema({
     userId: {
         type: mongoose_1.Schema.Types.ObjectId,
@@ -86,7 +91,7 @@ const orderSchema = new mongoose_1.Schema({
             values: ORDER_STATUSES,
             message: 'Status must be one of: ' + ORDER_STATUSES.join(', '),
         },
-        default: 'new',
+        default: 'in_progress',
     },
     progress: {
         type: Number,
@@ -99,6 +104,11 @@ const orderSchema = new mongoose_1.Schema({
         type: Number,
         default: 0,
         min: 0,
+    },
+    team: [teamMemberSchema],
+    teamLeadId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'User',
     },
 }, {
     timestamps: true,

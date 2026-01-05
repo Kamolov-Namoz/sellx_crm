@@ -5,6 +5,10 @@ const mongoose_1 = require("mongoose");
 const models_1 = require("../models");
 const notification_service_1 = require("./notification.service");
 class ProjectTaskService {
+    // Vazifani ID bo'yicha olish
+    async getById(id) {
+        return models_1.ProjectTask.findById(id);
+    }
     async create(data) {
         const task = new models_1.ProjectTask({
             ...data,
@@ -92,7 +96,7 @@ class ProjectTaskService {
         const tasks = await models_1.ProjectTask.find({ developerId: new mongoose_1.Types.ObjectId(developerId) })
             .populate({
             path: 'projectId',
-            select: 'title status clientId amount description createdAt progress',
+            select: 'title status clientId amount description createdAt progress teamLeadId',
             populate: {
                 path: 'clientId',
                 select: 'fullName companyName'
@@ -106,11 +110,21 @@ class ProjectTaskService {
                 const projectTasks = tasks.filter(t => t.projectId?._id?.toString() === project._id.toString());
                 const completedTasks = projectTasks.filter(t => t.isAccepted).length;
                 const totalTasks = projectTasks.length;
+                // Team Lead ekanligini tekshirish
+                // teamLeadId populate qilingan yoki qilinmagan bo'lishi mumkin
+                let teamLeadIdStr;
+                if (project.teamLeadId) {
+                    teamLeadIdStr = typeof project.teamLeadId === 'object' && '_id' in project.teamLeadId
+                        ? project.teamLeadId._id.toString()
+                        : project.teamLeadId.toString();
+                }
+                const isTeamLead = teamLeadIdStr === developerId;
                 projectMap.set(project._id.toString(), {
                     ...project.toObject(),
                     myTasks: totalTasks,
                     completedTasks,
                     myProgress: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
+                    isTeamLead,
                 });
             }
         });
@@ -123,7 +137,6 @@ class ProjectTaskService {
         const totalTasks = tasks.length;
         const completedTasks = tasks.filter(t => t.isAccepted).length;
         const inProgressTasks = tasks.filter(t => t.status === 'in_progress' && !t.isAccepted).length;
-        const pendingTasks = tasks.filter(t => t.status === 'pending').length;
         // Unique loyihalar
         const uniqueProjects = new Set(tasks.map(t => t.projectId?.toString()).filter(Boolean));
         const completedProjects = new Set(tasks.filter(t => t.projectId?.status === 'completed')
@@ -134,7 +147,6 @@ class ProjectTaskService {
             totalTasks,
             completedTasks,
             inProgressTasks,
-            pendingTasks,
             avgProgress,
             totalProjects: uniqueProjects.size,
             completedProjects: completedProjects.size,
@@ -229,18 +241,24 @@ class ProjectTaskService {
         }
         return task;
     }
-    // Loyihaning umumiy progressini hisoblash
+    // Loyihaning umumiy progressini hisoblash va statusini yangilash
     async updateProjectProgress(projectId) {
         const tasks = await models_1.ProjectTask.find({ projectId: new mongoose_1.Types.ObjectId(projectId) });
-        if (tasks.length === 0)
+        // Agar vazifa yo'q bo'lsa, loyiha jarayonda
+        if (tasks.length === 0) {
+            await models_1.Order.findByIdAndUpdate(projectId, {
+                progress: 0,
+                status: 'in_progress',
+            });
             return;
+        }
         const acceptedTasks = tasks.filter(t => t.isAccepted).length;
         const avgProgress = Math.round((acceptedTasks / tasks.length) * 100);
-        // Agar barcha vazifalar tasdiqlangan bo'lsa, loyihani completed qilish
-        const allAccepted = tasks.every(task => task.isAccepted);
+        // Agar barcha vazifalar tasdiqlangan bo'lsa - completed, aks holda - in_progress
+        const allAccepted = tasks.length > 0 && tasks.every(task => task.isAccepted);
         await models_1.Order.findByIdAndUpdate(projectId, {
             progress: avgProgress,
-            ...(allAccepted && { status: 'completed' }),
+            status: allAccepted ? 'completed' : 'in_progress',
         });
     }
     async getProjectProgress(projectId) {

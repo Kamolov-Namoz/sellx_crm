@@ -15,12 +15,21 @@ export interface IMilestone {
   tasks?: string[]; // Bu bosqichdagi vazifalar ro'yxati
 }
 
+// Jamoa a'zosi interfeysi
+export interface ITeamMember {
+  developerId: mongoose.Types.ObjectId;
+  role: 'developer' | 'team_lead';
+  joinedAt: Date;
+}
+
 export interface OrderDocument extends Omit<IOrder, '_id'>, Document {
   milestones?: IMilestone[];
   totalPaid?: number;
+  team?: ITeamMember[];
+  teamLeadId?: mongoose.Types.ObjectId;
 }
 
-const ORDER_STATUSES: OrderStatus[] = ['new', 'in_progress', 'completed'];
+const ORDER_STATUSES: OrderStatus[] = ['in_progress', 'completed'];
 
 const milestoneSchema = new Schema<IMilestone>(
   {
@@ -39,6 +48,15 @@ const milestoneSchema = new Schema<IMilestone>(
     tasks: [{ type: String }],
   },
   { _id: true }
+);
+
+const teamMemberSchema = new Schema<ITeamMember>(
+  {
+    developerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    role: { type: String, enum: ['developer', 'team_lead'], default: 'developer' },
+    joinedAt: { type: Date, default: Date.now },
+  },
+  { _id: false }
 );
 
 const orderSchema = new Schema<OrderDocument>(
@@ -77,7 +95,7 @@ const orderSchema = new Schema<OrderDocument>(
         values: ORDER_STATUSES,
         message: 'Status must be one of: ' + ORDER_STATUSES.join(', '),
       },
-      default: 'new',
+      default: 'in_progress',
     },
     progress: {
       type: Number,
@@ -90,6 +108,11 @@ const orderSchema = new Schema<OrderDocument>(
       type: Number,
       default: 0,
       min: 0,
+    },
+    team: [teamMemberSchema],
+    teamLeadId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
     },
   },
   {

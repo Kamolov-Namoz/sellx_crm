@@ -16,7 +16,7 @@ export interface IProjectTask extends Document {
     mimeType?: string;
   }[];
   progress: number; // 0-100 foiz
-  status: 'pending' | 'in_progress' | 'completed';
+  status: 'in_progress' | 'completed';
   isAccepted: boolean; // Developer bajarib bo'lgandan keyin tasdiqlaydi
   acceptedAt?: Date; // Qachon tasdiqlangan
   dueDate?: Date;
@@ -40,7 +40,7 @@ const projectTaskSchema = new Schema<IProjectTask>(
       mimeType: String,
     }],
     progress: { type: Number, default: 0, min: 0, max: 100 },
-    status: { type: String, enum: ['pending', 'in_progress', 'completed'], default: 'pending' },
+    status: { type: String, enum: ['in_progress', 'completed'], default: 'in_progress' },
     isAccepted: { type: Boolean, default: false },
     acceptedAt: { type: Date },
     dueDate: { type: Date },

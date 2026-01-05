@@ -25,7 +25,7 @@ export class OrderService {
       title: data.title,
       description: data.description,
       amount: data.amount,
-      status: data.status || 'new',
+      status: 'in_progress', // Loyiha yaratilganda avtomatik jarayonda
       milestones: data.milestones || [],
       totalPaid: 0,
     });
@@ -94,6 +94,8 @@ export class OrderService {
       userId: new mongoose.Types.ObjectId(userId),
     })
       .populate('clientId', 'fullName companyName phoneNumber location')
+      .populate('team.developerId', 'firstName lastName username')
+      .populate('teamLeadId', 'firstName lastName username')
       .lean();
 
     if (!order) {
@@ -157,7 +159,6 @@ export class OrderService {
     ]);
 
     const result: Record<OrderStatus, { count: number; totalAmount: number }> = {
-      new: { count: 0, totalAmount: 0 },
       in_progress: { count: 0, totalAmount: 0 },
       completed: { count: 0, totalAmount: 0 },
     };
@@ -347,6 +348,8 @@ export class OrderService {
     const order = await Order.findById(orderId)
       .populate('clientId', 'fullName companyName phoneNumber')
       .populate('userId', 'firstName lastName username')
+      .populate('team.developerId', 'firstName lastName username')
+      .populate('teamLeadId', 'firstName lastName username')
       .lean();
 
     if (!order) {
@@ -354,6 +357,148 @@ export class OrderService {
     }
 
     return order;
+  }
+
+  /**
+   * Add developer to project team
+   */
+  async addTeamMember(userId: string, orderId: string, developerId: string, role: 'developer' | 'team_lead' = 'developer') {
+    const order = await Order.findOne({
+      _id: orderId,
+      userId: new mongoose.Types.ObjectId(userId),
+    });
+
+    if (!order) {
+      throw new AppError('Order not found', 404, 'ORDER_NOT_FOUND');
+    }
+
+    // Check if developer already in team
+    const existingMember = order.team?.find(
+      (m) => m.developerId.toString() === developerId
+    );
+
+    if (existingMember) {
+      throw new AppError('Developer already in team', 400, 'ALREADY_IN_TEAM');
+    }
+
+    // Initialize team array if not exists
+    if (!order.team) {
+      order.team = [];
+    }
+
+    // Add new team member
+    order.team.push({
+      developerId: new mongoose.Types.ObjectId(developerId),
+      role,
+      joinedAt: new Date(),
+    });
+
+    // If role is team_lead, update teamLeadId
+    if (role === 'team_lead') {
+      order.teamLeadId = new mongoose.Types.ObjectId(developerId);
+    }
+
+    await order.save();
+    
+    // Return populated order
+    return Order.findById(orderId)
+      .populate('team.developerId', 'firstName lastName username')
+      .populate('teamLeadId', 'firstName lastName username')
+      .lean();
+  }
+
+  /**
+   * Remove developer from project team
+   */
+  async removeTeamMember(userId: string, orderId: string, developerId: string) {
+    const order = await Order.findOne({
+      _id: orderId,
+      userId: new mongoose.Types.ObjectId(userId),
+    });
+
+    if (!order) {
+      throw new AppError('Order not found', 404, 'ORDER_NOT_FOUND');
+    }
+
+    // Remove from team
+    order.team = order.team?.filter(
+      (m) => m.developerId.toString() !== developerId
+    );
+
+    // If removed developer was team lead, clear teamLeadId
+    if (order.teamLeadId?.toString() === developerId) {
+      order.teamLeadId = undefined;
+    }
+
+    await order.save();
+    
+    return Order.findById(orderId)
+      .populate('team.developerId', 'firstName lastName username')
+      .populate('teamLeadId', 'firstName lastName username')
+      .lean();
+  }
+
+  /**
+   * Set team lead for project
+   */
+  async setTeamLead(userId: string, orderId: string, developerId: string) {
+    const order = await Order.findOne({
+      _id: orderId,
+      userId: new mongoose.Types.ObjectId(userId),
+    });
+
+    if (!order) {
+      throw new AppError('Order not found', 404, 'ORDER_NOT_FOUND');
+    }
+
+    // Check if developer is in team
+    const member = order.team?.find(
+      (m) => m.developerId.toString() === developerId
+    );
+
+    if (!member) {
+      throw new AppError('Developer not in team', 400, 'NOT_IN_TEAM');
+    }
+
+    // Update previous team lead role to developer
+    if (order.teamLeadId) {
+      const prevLead = order.team?.find(
+        (m) => m.developerId.toString() === order.teamLeadId?.toString()
+      );
+      if (prevLead) {
+        prevLead.role = 'developer';
+      }
+    }
+
+    // Set new team lead
+    member.role = 'team_lead';
+    order.teamLeadId = new mongoose.Types.ObjectId(developerId);
+
+    await order.save();
+    
+    return Order.findById(orderId)
+      .populate('team.developerId', 'firstName lastName username')
+      .populate('teamLeadId', 'firstName lastName username')
+      .lean();
+  }
+
+  /**
+   * Get project team
+   */
+  async getTeam(orderId: string) {
+    const order = await Order.findById(orderId)
+      .populate('team.developerId', 'firstName lastName username phoneNumber')
+      .populate('teamLeadId', 'firstName lastName username phoneNumber')
+      .lean();
+
+    if (!order) {
+      throw new AppError('Order not found', 404, 'ORDER_NOT_FOUND');
+    }
+
+    return {
+      team: order.team || [],
+      teamLead: order.teamLeadId,
+    };
   }
 }
 

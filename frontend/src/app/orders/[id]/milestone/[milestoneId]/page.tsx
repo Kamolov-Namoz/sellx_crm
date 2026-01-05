@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useToast } from '@/contexts/ToastContext';
-import { orderService, Developer } from '@/services/order.service';
+import { orderService } from '@/services/order.service';
 import { projectTaskService, ProjectTask, MilestoneProgress } from '@/services/projectTask.service';
 import { Order, Milestone, MILESTONE_STATUS_LABELS, MILESTONE_STATUS_COLORS, MilestoneStatus } from '@/types';
 
@@ -82,7 +82,6 @@ function MilestoneTrackingContent() {
     ? allTasks 
     : allTasks.filter(t => (t.developerId as { _id: string })?._id === filterDev);
   
-  const pendingTasks = filteredTasks.filter(t => t.status === 'pending');
   const inProgressTasks = filteredTasks.filter(t => t.status === 'in_progress' && !t.isAccepted);
   const completedTasks = filteredTasks.filter(t => t.isAccepted || t.status === 'completed');
 
@@ -160,11 +159,7 @@ function MilestoneTrackingContent() {
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-3 gap-2">
-          <div className="bg-dark-800 rounded-xl p-3 text-center">
-            <div className="text-xl font-bold text-gray-400">{pendingTasks.length}</div>
-            <div className="text-xs text-gray-500">Kutilmoqda</div>
-          </div>
+        <div className="grid grid-cols-2 gap-2">
           <div className="bg-dark-800 rounded-xl p-3 text-center">
             <div className="text-xl font-bold text-blue-400">{inProgressTasks.length}</div>
             <div className="text-xs text-gray-500">Jarayonda</div>
@@ -184,9 +179,10 @@ function MilestoneTrackingContent() {
             className="flex-1 bg-dark-800 rounded-xl px-3 py-3 text-white text-sm"
           >
             <option value="all">Barcha dasturchilar</option>
-            {progress?.developers.map(dev => (
-              <option key={dev._id} value={dev._id}>
-                {dev.firstName} {dev.lastName}
+            {order.team?.map(member => (
+              <option key={member.developerId._id} value={member.developerId._id}>
+                {member.developerId.firstName} {member.developerId.lastName}
+                {member.role === 'team_lead' ? ' (Lead)' : ''}
               </option>
             ))}
           </select>
@@ -215,21 +211,6 @@ function MilestoneTrackingContent() {
                 </h3>
                 <div className="space-y-2">
                   {inProgressTasks.map(task => (
-                    <TaskCard key={task._id} task={task} onUpdate={loadData} onEdit={setEditingTask} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Pending */}
-            {pendingTasks.length > 0 && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
-                  Kutilmoqda
-                </h3>
-                <div className="space-y-2">
-                  {pendingTasks.map(task => (
                     <TaskCard key={task._id} task={task} onUpdate={loadData} onEdit={setEditingTask} />
                   ))}
                 </div>
@@ -265,7 +246,7 @@ function MilestoneTrackingContent() {
         <AddTaskModal
           projectId={params.id as string}
           milestoneId={params.milestoneId as string}
-          existingDevelopers={progress?.developers || []}
+          teamMembers={order.team || []}
           onClose={() => setShowAddTask(false)}
           onSuccess={() => { setShowAddTask(false); loadData(); }}
         />
@@ -386,45 +367,25 @@ function TaskCard({ task, onUpdate, onEdit }: { task: ProjectTask; onUpdate: () 
   );
 }
 
-// Add Task Modal - dasturchi tanlash va vazifa qo'shish birgalikda
+// Add Task Modal - faqat loyiha jamoasidagi dasturchilardan tanlash
 function AddTaskModal({ 
   projectId, 
   milestoneId, 
-  existingDevelopers,
+  teamMembers,
   onClose, 
   onSuccess 
 }: { 
   projectId: string;
   milestoneId: string;
-  existingDevelopers: { _id: string; firstName: string; lastName: string; username: string }[];
+  teamMembers: { developerId: { _id: string; firstName: string; lastName: string; username: string }; role: string }[];
   onClose: () => void;
   onSuccess: () => void;
 }) {
   const toast = useToast();
-  const [allDevelopers, setAllDevelopers] = useState<Developer[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedDev, setSelectedDev] = useState<string>('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
-  const [showNewDev, setShowNewDev] = useState(false);
-
-  useEffect(() => {
-    loadDevelopers();
-  }, []);
-
-  const loadDevelopers = async () => {
-    try {
-      const res = await orderService.getDevelopers();
-      if (res.success && res.data) {
-        setAllDevelopers(res.data);
-      }
-    } catch {
-      toast.error('Xatolik');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSubmit = async () => {
     if (!selectedDev || !title.trim()) {
@@ -449,10 +410,6 @@ function AddTaskModal({
       setSaving(false);
     }
   };
-
-  // Mavjud va yangi dasturchilar
-  const existingIds = existingDevelopers.map(d => d._id);
-  const newDevelopers = allDevelopers.filter(d => !existingIds.includes(d._id));
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
@@ -495,90 +452,55 @@ function AddTaskModal({
             />
           </div>
 
-          {/* Dasturchi tanlash */}
+          {/* Dasturchi tanlash - faqat jamoadagilar */}
           <div>
             <label className="block text-sm text-gray-400 mb-1.5">Dasturchi *</label>
             
-            {loading ? (
-              <div className="flex justify-center py-4">
-                <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+            {teamMembers.length > 0 ? (
+              <div className="space-y-2">
+                {teamMembers.map(member => (
+                  <button
+                    key={member.developerId._id}
+                    type="button"
+                    onClick={() => setSelectedDev(member.developerId._id)}
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition ${
+                      selectedDev === member.developerId._id 
+                        ? 'ring-2 ring-primary-500' 
+                        : ''
+                    }`}
+                    style={{ backgroundColor: selectedDev === member.developerId._id ? 'rgba(59,130,246,0.2)' : '#2d3848' }}
+                  >
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      member.role === 'team_lead' ? 'bg-yellow-500/30' : 'bg-primary-500/30'
+                    }`}>
+                      <span className={`text-sm ${
+                        member.role === 'team_lead' ? 'text-yellow-400' : 'text-primary-400'
+                      }`}>
+                        {member.developerId.firstName?.[0]}{member.developerId.lastName?.[0]}
+                      </span>
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="text-white text-sm">{member.developerId.firstName} {member.developerId.lastName}</p>
+                      <p className="text-xs text-gray-500">@{member.developerId.username}</p>
+                    </div>
+                    {member.role === 'team_lead' && (
+                      <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded text-xs">
+                        Lead
+                      </span>
+                    )}
+                    {selectedDev === member.developerId._id && (
+                      <svg className="w-5 h-5 text-primary-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </button>
+                ))}
               </div>
             ) : (
-              <div className="space-y-2">
-                {/* Mavjud dasturchilar */}
-                {existingDevelopers.length > 0 && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Bu bosqichdagi dasturchilar:</p>
-                    {existingDevelopers.map(dev => (
-                      <button
-                        key={dev._id}
-                        type="button"
-                        onClick={() => setSelectedDev(dev._id)}
-                        className={`w-full flex items-center gap-3 p-3 rounded-xl mb-1 transition ${
-                          selectedDev === dev._id 
-                            ? 'ring-2 ring-primary-500' 
-                            : ''
-                        }`}
-                        style={{ backgroundColor: selectedDev === dev._id ? 'rgba(59,130,246,0.2)' : '#2d3848' }}
-                      >
-                        <div className="w-8 h-8 bg-primary-500/30 rounded-full flex items-center justify-center">
-                          <span className="text-primary-400 text-sm">{dev.firstName?.[0]}{dev.lastName?.[0]}</span>
-                        </div>
-                        <span className="text-white text-sm flex-1 text-left">{dev.firstName} {dev.lastName}</span>
-                        {selectedDev === dev._id && (
-                          <svg className="w-5 h-5 text-primary-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Yangi dasturchi qo'shish */}
-                {newDevelopers.length > 0 && (
-                  <div>
-                    <button
-                      type="button"
-                      onClick={() => setShowNewDev(!showNewDev)}
-                      className="w-full flex items-center justify-between p-3 rounded-xl text-sm"
-                      style={{ backgroundColor: '#2d3848' }}
-                    >
-                      <span className="text-gray-400">Yangi dasturchi qo'shish</span>
-                      <svg className={`w-4 h-4 text-gray-400 transition ${showNewDev ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                    
-                    {showNewDev && (
-                      <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
-                        {newDevelopers.map(dev => (
-                          <button
-                            key={dev._id}
-                            type="button"
-                            onClick={() => { setSelectedDev(dev._id); setShowNewDev(false); }}
-                            className={`w-full flex items-center gap-3 p-2 rounded-lg transition ${
-                              selectedDev === dev._id ? 'ring-1 ring-primary-500' : ''
-                            }`}
-                            style={{ backgroundColor: selectedDev === dev._id ? 'rgba(59,130,246,0.2)' : '#3a4556' }}
-                          >
-                            <div className="w-7 h-7 bg-gray-500/30 rounded-full flex items-center justify-center">
-                              <span className="text-gray-400 text-xs">{dev.firstName?.[0]}{dev.lastName?.[0]}</span>
-                            </div>
-                            <div className="text-left">
-                              <p className="text-white text-sm">{dev.firstName} {dev.lastName}</p>
-                              <p className="text-xs text-gray-500">@{dev.username}</p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {existingDevelopers.length === 0 && newDevelopers.length === 0 && (
-                  <p className="text-gray-500 text-sm text-center py-3">Dasturchi topilmadi</p>
-                )}
+              <div className="text-center py-6 rounded-xl" style={{ backgroundColor: '#2d3848' }}>
+                <div className="text-3xl mb-2">👥</div>
+                <p className="text-gray-400 text-sm">Jamoa bo'sh</p>
+                <p className="text-gray-500 text-xs mt-1">Avval loyihaga dasturchilar qo'shing</p>
               </div>
             )}
           </div>
@@ -708,19 +630,7 @@ function EditTaskModal({
           {/* Status */}
           <div>
             <label className="block text-sm text-gray-400 mb-1.5">Status</label>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => setStatus('pending')}
-                className={`py-2.5 rounded-lg text-sm font-medium transition ${
-                  status === 'pending' 
-                    ? 'bg-gray-500/30 text-gray-300 ring-2 ring-gray-500' 
-                    : 'text-gray-400'
-                }`}
-                style={{ backgroundColor: status === 'pending' ? undefined : '#2d3848' }}
-              >
-                Kutilmoqda
-              </button>
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setStatus('in_progress')}

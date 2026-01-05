@@ -14,7 +14,7 @@ export interface IProjectTask extends Document {
         mimeType?: string;
     }[];
     progress: number;
-    status: 'pending' | 'in_progress' | 'completed';
+    status: 'in_progress' | 'completed';
     isAccepted: boolean;
     acceptedAt?: Date;
     dueDate?: Date;

@@ -2,7 +2,7 @@ import { Request } from 'express';
 import { Types } from 'mongoose';
 export type UserRole = 'admin' | 'user' | 'developer';
 export type ClientStatus = 'new' | 'thinking' | 'agreed' | 'rejected' | 'callback';
-export type OrderStatus = 'new' | 'in_progress' | 'completed';
+export type OrderStatus = 'in_progress' | 'completed';
 export type ConversationType = 'text' | 'audio' | 'image' | 'video';
 export interface IUser {
     _id: Types.ObjectId;

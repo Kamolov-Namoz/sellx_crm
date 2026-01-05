@@ -50,7 +50,7 @@ const projectTaskSchema = new mongoose_1.Schema({
             mimeType: String,
         }],
     progress: { type: Number, default: 0, min: 0, max: 100 },
-    status: { type: String, enum: ['pending', 'in_progress', 'completed'], default: 'pending' },
+    status: { type: String, enum: ['in_progress', 'completed'], default: 'in_progress' },
     isAccepted: { type: Boolean, default: false },
     acceptedAt: { type: Date },
     dueDate: { type: Date },

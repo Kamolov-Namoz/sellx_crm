@@ -91,6 +91,11 @@ export const adminService = {
     const response = await api.get<PaginatedResponse<Order>>('/admin/orders', { params });
     return response.data;
   },
+
+  async getOrder(orderId: string): Promise<ApiResponse<Order>> {
+    const response = await api.get<ApiResponse<Order>>(`/admin/orders/${orderId}`);
+    return response.data;
+  },
 };
 
 export default adminService;

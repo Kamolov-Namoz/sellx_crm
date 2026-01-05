@@ -12,7 +12,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 
-const STATUSES: (OrderStatus | 'all')[] = ['all', 'new', 'in_progress', 'completed'];
+const STATUSES: (OrderStatus | 'all')[] = ['all', 'in_progress', 'completed'];
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -100,7 +100,7 @@ export default function AdminOrdersPage() {
           ) : (
             <div className="space-y-3">
               {orders.map((order) => (
-                <Link key={order._id} href={`/orders/${order._id}`} className="block bg-dark-800 rounded-xl p-4 hover:bg-dark-700">
+                <Link key={order._id} href={`/admin/orders/${order._id}`} className="block bg-dark-800 rounded-xl p-4 hover:bg-dark-700">
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <h3 className="font-semibold text-white">{order.title}</h3>
@@ -120,6 +120,18 @@ export default function AdminOrdersPage() {
                     ) : <span />}
                     <span className="text-xs text-gray-600">{format(new Date(order.createdAt), 'dd.MM.yyyy')}</span>
                   </div>
+                  {/* Progress bar */}
+                  {order.progress !== undefined && (
+                    <div className="mt-2">
+                      <div className="w-full bg-dark-700 rounded-full h-1.5">
+                        <div 
+                          className={`h-1.5 rounded-full ${order.progress === 100 ? 'bg-green-500' : 'bg-primary-500'}`}
+                          style={{ width: `${order.progress}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1 text-right">{order.progress}%</p>
+                    </div>
+                  )}
                 </Link>
               ))}
             </div>

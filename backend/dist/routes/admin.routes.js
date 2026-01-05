@@ -289,6 +289,22 @@ router.get('/orders', [
     }
 });
 /**
+ * GET /api/admin/orders/:id
+ * Get single order details for admin
+ */
+router.get('/orders/:id', (0, express_validator_1.param)('id').isMongoId().withMessage('Valid order ID is required'), validateRequest, async (req, res, next) => {
+    try {
+        const order = await order_service_1.orderService.getOrderForDeveloper(req.params.id);
+        res.json({
+            success: true,
+            data: order,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+/**
  * GET /api/admin/developers
  * Get all developers (users with role='developer')
  */

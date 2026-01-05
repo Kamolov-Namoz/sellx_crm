@@ -2,8 +2,33 @@ import { Router, Response } from 'express';
 import { projectTaskService } from '../services/projectTask.service';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { AuthenticatedRequest } from '../types';
+import { Order } from '../models';
 
 const router = Router();
+
+// Helper: Foydalanuvchi loyihaga ruxsati bormi (seller yoki team lead)
+async function canManageTasks(userId: string, projectId: string): Promise<boolean> {
+  const order = await Order.findById(projectId);
+  if (!order) return false;
+  
+  // Seller (loyiha egasi)
+  const orderUser = order.userId as any;
+  const orderUserId = typeof orderUser === 'object' && orderUser._id
+    ? orderUser._id.toString()
+    : orderUser.toString();
+  if (orderUserId === userId) return true;
+  
+  // Team Lead
+  if (order.teamLeadId) {
+    const teamLead = order.teamLeadId as any;
+    const teamLeadIdStr = typeof teamLead === 'object' && teamLead._id
+      ? teamLead._id.toString()
+      : teamLead.toString();
+    if (teamLeadIdStr === userId) return true;
+  }
+  
+  return false;
+}
 
 // Loyihaning vazifalari
 router.get('/project/:projectId', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
@@ -105,9 +130,18 @@ router.get('/developer/:developerId', authMiddleware, async (req: AuthenticatedR
   }
 });
 
-// Yangi vazifa
+// Yangi vazifa - Seller yoki Team Lead yarata oladi
 router.post('/', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
+    const { projectId } = req.body;
+    
+    // Ruxsatni tekshirish
+    const hasAccess = await canManageTasks(req.user!.userId, projectId);
+    if (!hasAccess) {
+      res.status(403).json({ success: false, message: 'Sizda vazifa yaratish huquqi yo\'q' });
+      return;
+    }
+    
     const task = await projectTaskService.create(req.body);
     res.status(201).json({ success: true, data: task });
   } catch (error) {
@@ -115,23 +149,49 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res: Response
   }
 });
 
-// Vazifani yangilash (progress) - developer o'zi yangilashi mumkin
+// Vazifani yangilash - Seller, Team Lead yoki vazifa egasi (developer)
 router.put('/:id', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const task = await projectTaskService.update(req.params.id, req.body);
-    if (!task) {
+    // Avval vazifani olish
+    const existingTask = await projectTaskService.getById(req.params.id);
+    if (!existingTask) {
       res.status(404).json({ success: false, message: 'Vazifa topilmadi' });
       return;
     }
+    
+    // Ruxsatni tekshirish
+    const isOwner = existingTask.developerId.toString() === req.user!.userId;
+    const hasAccess = await canManageTasks(req.user!.userId, existingTask.projectId.toString());
+    
+    if (!isOwner && !hasAccess) {
+      res.status(403).json({ success: false, message: 'Sizda vazifani yangilash huquqi yo\'q' });
+      return;
+    }
+    
+    const task = await projectTaskService.update(req.params.id, req.body);
     res.json({ success: true, data: task });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Xatolik yuz berdi' });
   }
 });
 
-// Vazifani o'chirish
+// Vazifani o'chirish - faqat Seller yoki Team Lead
 router.delete('/:id', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
+    // Avval vazifani olish
+    const existingTask = await projectTaskService.getById(req.params.id);
+    if (!existingTask) {
+      res.status(404).json({ success: false, message: 'Vazifa topilmadi' });
+      return;
+    }
+    
+    // Ruxsatni tekshirish
+    const hasAccess = await canManageTasks(req.user!.userId, existingTask.projectId.toString());
+    if (!hasAccess) {
+      res.status(403).json({ success: false, message: 'Sizda vazifani o\'chirish huquqi yo\'q' });
+      return;
+    }
+    
     await projectTaskService.delete(req.params.id);
     res.json({ success: true, message: 'Vazifa o\'chirildi' });
   } catch (error) {

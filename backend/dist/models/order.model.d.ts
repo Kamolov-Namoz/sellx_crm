@@ -12,9 +12,16 @@ export interface IMilestone {
     paidAt?: Date;
     tasks?: string[];
 }
+export interface ITeamMember {
+    developerId: mongoose.Types.ObjectId;
+    role: 'developer' | 'team_lead';
+    joinedAt: Date;
+}
 export interface OrderDocument extends Omit<IOrder, '_id'>, Document {
     milestones?: IMilestone[];
     totalPaid?: number;
+    team?: ITeamMember[];
+    teamLeadId?: mongoose.Types.ObjectId;
 }
 export declare const Order: mongoose.Model<OrderDocument, {}, {}, {}, mongoose.Document<unknown, {}, OrderDocument, {}, {}> & OrderDocument & Required<{
     _id: mongoose.Types.ObjectId;

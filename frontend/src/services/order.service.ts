@@ -11,7 +11,6 @@ export interface GetOrdersParams {
 }
 
 export interface OrderStats {
-  new: { count: number; totalAmount: number };
   in_progress: { count: number; totalAmount: number };
   completed: { count: number; totalAmount: number };
 }
@@ -22,6 +21,17 @@ export interface Developer {
   lastName: string;
   username: string;
   phoneNumber?: string;
+}
+
+export interface TeamMember {
+  developerId: Developer;
+  role: 'developer' | 'team_lead';
+  joinedAt: string;
+}
+
+export interface TeamData {
+  team: TeamMember[];
+  teamLead: Developer | null;
 }
 
 export const orderService = {
@@ -97,6 +107,37 @@ export const orderService = {
     const response = await api.delete<ApiResponse<Order>>(
       `/orders/${orderId}/milestones/${milestoneId}`
     );
+    return response.data;
+  },
+
+  // ==================== TEAM MANAGEMENT ====================
+
+  async getTeam(orderId: string): Promise<ApiResponse<TeamData>> {
+    const response = await api.get<ApiResponse<TeamData>>(`/orders/${orderId}/team`);
+    return response.data;
+  },
+
+  async addTeamMember(
+    orderId: string,
+    developerId: string,
+    role: 'developer' | 'team_lead' = 'developer'
+  ): Promise<ApiResponse<Order>> {
+    const response = await api.post<ApiResponse<Order>>(`/orders/${orderId}/team`, {
+      developerId,
+      role,
+    });
+    return response.data;
+  },
+
+  async removeTeamMember(orderId: string, developerId: string): Promise<ApiResponse<Order>> {
+    const response = await api.delete<ApiResponse<Order>>(`/orders/${orderId}/team/${developerId}`);
+    return response.data;
+  },
+
+  async setTeamLead(orderId: string, developerId: string): Promise<ApiResponse<Order>> {
+    const response = await api.put<ApiResponse<Order>>(`/orders/${orderId}/team/lead`, {
+      developerId,
+    });
     return response.data;
   },
 };
