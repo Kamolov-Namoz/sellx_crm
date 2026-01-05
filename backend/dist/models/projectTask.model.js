@@ -37,6 +37,7 @@ exports.ProjectTask = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const projectTaskSchema = new mongoose_1.Schema({
     projectId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Order', required: true },
+    milestoneId: { type: mongoose_1.Schema.Types.ObjectId }, // Bosqich ID
     developerId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true },
     description: { type: String },
@@ -55,6 +56,7 @@ const projectTaskSchema = new mongoose_1.Schema({
     dueDate: { type: Date },
 }, { timestamps: true });
 projectTaskSchema.index({ projectId: 1 });
+projectTaskSchema.index({ projectId: 1, milestoneId: 1 });
 projectTaskSchema.index({ developerId: 1 });
 exports.ProjectTask = mongoose_1.default.model('ProjectTask', projectTaskSchema);
 //# sourceMappingURL=projectTask.model.js.map

@@ -13,6 +13,14 @@ export interface AdminUser {
   orderCount?: number;
 }
 
+export interface Developer {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  phoneNumber?: string;
+}
+
 export interface AdminStats {
   totals: {
     users: number;

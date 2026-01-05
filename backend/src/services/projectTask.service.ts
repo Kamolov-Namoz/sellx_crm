@@ -7,6 +7,7 @@ export class ProjectTaskService {
     const task = new ProjectTask({
       ...data,
       projectId: new Types.ObjectId(data.projectId as unknown as string),
+      milestoneId: data.milestoneId ? new Types.ObjectId(data.milestoneId as unknown as string) : undefined,
       developerId: new Types.ObjectId(data.developerId as unknown as string),
     });
     const savedTask = await task.save();
@@ -38,6 +39,46 @@ export class ProjectTaskService {
     return ProjectTask.find({ projectId: new Types.ObjectId(projectId) })
       .populate('developerId', 'firstName lastName username phoneNumber')
       .sort({ createdAt: -1 });
+  }
+
+  // Bosqich bo'yicha vazifalarni olish
+  async getByMilestone(projectId: string, milestoneId: string) {
+    return ProjectTask.find({ 
+      projectId: new Types.ObjectId(projectId),
+      milestoneId: new Types.ObjectId(milestoneId)
+    })
+      .populate('developerId', 'firstName lastName username phoneNumber')
+      .sort({ createdAt: -1 });
+  }
+
+  // Bosqich progressini hisoblash
+  async getMilestoneProgress(projectId: string, milestoneId: string) {
+    const tasks = await this.getByMilestone(projectId, milestoneId);
+    const acceptedTasks = tasks.filter(t => t.isAccepted).length;
+    const avgProgress = tasks.length > 0 ? Math.round((acceptedTasks / tasks.length) * 100) : 0;
+    
+    // Unique dasturchilar
+    const developers = new Map();
+    tasks.forEach(task => {
+      const dev = task.developerId as any;
+      if (dev && dev._id && !developers.has(dev._id.toString())) {
+        developers.set(dev._id.toString(), {
+          _id: dev._id,
+          firstName: dev.firstName,
+          lastName: dev.lastName,
+          username: dev.username,
+          phoneNumber: dev.phoneNumber,
+        });
+      }
+    });
+    
+    return {
+      tasks,
+      totalTasks: tasks.length,
+      completedTasks: acceptedTasks,
+      avgProgress,
+      developers: Array.from(developers.values()),
+    };
   }
 
   async getByDeveloper(developerId: string) {

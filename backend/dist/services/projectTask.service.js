@@ -9,6 +9,7 @@ class ProjectTaskService {
         const task = new models_1.ProjectTask({
             ...data,
             projectId: new mongoose_1.Types.ObjectId(data.projectId),
+            milestoneId: data.milestoneId ? new mongoose_1.Types.ObjectId(data.milestoneId) : undefined,
             developerId: new mongoose_1.Types.ObjectId(data.developerId),
         });
         const savedTask = await task.save();
@@ -37,6 +38,42 @@ class ProjectTaskService {
         return models_1.ProjectTask.find({ projectId: new mongoose_1.Types.ObjectId(projectId) })
             .populate('developerId', 'firstName lastName username phoneNumber')
             .sort({ createdAt: -1 });
+    }
+    // Bosqich bo'yicha vazifalarni olish
+    async getByMilestone(projectId, milestoneId) {
+        return models_1.ProjectTask.find({
+            projectId: new mongoose_1.Types.ObjectId(projectId),
+            milestoneId: new mongoose_1.Types.ObjectId(milestoneId)
+        })
+            .populate('developerId', 'firstName lastName username phoneNumber')
+            .sort({ createdAt: -1 });
+    }
+    // Bosqich progressini hisoblash
+    async getMilestoneProgress(projectId, milestoneId) {
+        const tasks = await this.getByMilestone(projectId, milestoneId);
+        const acceptedTasks = tasks.filter(t => t.isAccepted).length;
+        const avgProgress = tasks.length > 0 ? Math.round((acceptedTasks / tasks.length) * 100) : 0;
+        // Unique dasturchilar
+        const developers = new Map();
+        tasks.forEach(task => {
+            const dev = task.developerId;
+            if (dev && dev._id && !developers.has(dev._id.toString())) {
+                developers.set(dev._id.toString(), {
+                    _id: dev._id,
+                    firstName: dev.firstName,
+                    lastName: dev.lastName,
+                    username: dev.username,
+                    phoneNumber: dev.phoneNumber,
+                });
+            }
+        });
+        return {
+            tasks,
+            totalTasks: tasks.length,
+            completedTasks: acceptedTasks,
+            avgProgress,
+            developers: Array.from(developers.values()),
+        };
     }
     async getByDeveloper(developerId) {
         return models_1.ProjectTask.find({ developerId: new mongoose_1.Types.ObjectId(developerId) })

@@ -338,4 +338,43 @@ router.get(
   }
 );
 
+/**
+ * GET /api/admin/developers
+ * Get all developers (users with role='developer')
+ */
+router.get(
+  '/developers',
+  [
+    query('search').optional().trim(),
+  ],
+  validateRequest,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const search = req.query.search as string;
+
+      const filter: Record<string, unknown> = { role: 'developer' };
+      if (search) {
+        filter.$or = [
+          { username: { $regex: search, $options: 'i' } },
+          { firstName: { $regex: search, $options: 'i' } },
+          { lastName: { $regex: search, $options: 'i' } },
+          { phoneNumber: { $regex: search, $options: 'i' } },
+        ];
+      }
+
+      const developers = await User.find(filter)
+        .select('_id firstName lastName username phoneNumber')
+        .sort({ firstName: 1 })
+        .lean();
+
+      res.json({
+        success: true,
+        data: developers,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 export default router;

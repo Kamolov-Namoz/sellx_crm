@@ -2,6 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IProjectTask extends Document {
   projectId: mongoose.Types.ObjectId; // Order/Project
+  milestoneId?: mongoose.Types.ObjectId; // Qaysi bosqichga tegishli
   developerId: mongoose.Types.ObjectId; // Developer (User with role='developer')
   title: string; // Vazifa nomi
   description?: string;
@@ -26,6 +27,7 @@ export interface IProjectTask extends Document {
 const projectTaskSchema = new Schema<IProjectTask>(
   {
     projectId: { type: Schema.Types.ObjectId, ref: 'Order', required: true },
+    milestoneId: { type: Schema.Types.ObjectId }, // Bosqich ID
     developerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true },
     description: { type: String },
@@ -47,6 +49,7 @@ const projectTaskSchema = new Schema<IProjectTask>(
 );
 
 projectTaskSchema.index({ projectId: 1 });
+projectTaskSchema.index({ projectId: 1, milestoneId: 1 });
 projectTaskSchema.index({ developerId: 1 });
 
 export const ProjectTask = mongoose.model<IProjectTask>('ProjectTask', projectTaskSchema);

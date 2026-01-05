@@ -273,6 +273,74 @@ export class OrderService {
   }
 
   /**
+   * Update milestone details (title, amount, percentage, dueDate, tasks)
+   */
+  async updateMilestone(
+    userId: string,
+    orderId: string,
+    milestoneId: string,
+    data: {
+      title?: string;
+      description?: string;
+      amount?: number;
+      percentage?: number;
+      dueDate?: string | null;
+      tasks?: string[];
+    }
+  ) {
+    const order = await Order.findOne({
+      _id: orderId,
+      userId: new mongoose.Types.ObjectId(userId),
+    });
+
+    if (!order) {
+      throw new AppError('Order not found', 404, 'ORDER_NOT_FOUND');
+    }
+
+    const milestone = order.milestones?.find(
+      (m) => m._id?.toString() === milestoneId
+    );
+
+    if (!milestone) {
+      throw new AppError('Milestone not found', 404, 'MILESTONE_NOT_FOUND');
+    }
+
+    // Update fields
+    if (data.title) milestone.title = data.title;
+    if (data.description !== undefined) milestone.description = data.description;
+    if (data.amount !== undefined) milestone.amount = data.amount;
+    if (data.percentage !== undefined) milestone.percentage = data.percentage;
+    if (data.dueDate !== undefined) {
+      milestone.dueDate = data.dueDate ? new Date(data.dueDate) : undefined;
+    }
+    if (data.tasks !== undefined) milestone.tasks = data.tasks;
+
+    await order.save();
+    return order.toObject();
+  }
+
+  /**
+   * Delete milestone
+   */
+  async deleteMilestone(userId: string, orderId: string, milestoneId: string) {
+    const order = await Order.findOne({
+      _id: orderId,
+      userId: new mongoose.Types.ObjectId(userId),
+    });
+
+    if (!order) {
+      throw new AppError('Order not found', 404, 'ORDER_NOT_FOUND');
+    }
+
+    order.milestones = order.milestones?.filter(
+      (m) => m._id?.toString() !== milestoneId
+    );
+
+    await order.save();
+    return order.toObject();
+  }
+
+  /**
    * Get order with milestones for developer view
    */
   async getOrderForDeveloper(orderId: string) {

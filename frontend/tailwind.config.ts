@@ -21,6 +21,13 @@ const config: Config = {
           800: '#1e40af',
           900: '#1e3a8a',
         },
+        dark: {
+          500: '#3a4556',
+          600: '#2d3848',
+          700: '#1e2836',
+          800: '#17212b',
+          900: '#0e1621',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

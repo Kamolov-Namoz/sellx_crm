@@ -26,6 +26,7 @@ export interface ProjectTask {
       phoneNumber?: string;
     };
   };
+  milestoneId?: string;
   developerId: string | {
     _id: string;
     firstName: string;
@@ -96,8 +97,23 @@ export interface ProjectProgress {
   avgProgress: number;
 }
 
+export interface MilestoneProgress {
+  tasks: ProjectTask[];
+  totalTasks: number;
+  completedTasks: number;
+  avgProgress: number;
+  developers: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+    phoneNumber?: string;
+  }[];
+}
+
 export interface CreateTaskData {
   projectId: string;
+  milestoneId?: string;
   developerId: string;
   title: string;
   description?: string;
@@ -109,6 +125,12 @@ export const projectTaskService = {
   // Loyihaning vazifalari
   getByProject: async (projectId: string): Promise<ApiResponse<ProjectProgress>> => {
     const response = await api.get<ApiResponse<ProjectProgress>>(`/tasks/project/${projectId}`);
+    return response.data;
+  },
+  
+  // Bosqich (milestone) bo'yicha vazifalar
+  getByMilestone: async (projectId: string, milestoneId: string): Promise<ApiResponse<MilestoneProgress>> => {
+    const response = await api.get<ApiResponse<MilestoneProgress>>(`/tasks/project/${projectId}/milestone/${milestoneId}`);
     return response.data;
   },
   

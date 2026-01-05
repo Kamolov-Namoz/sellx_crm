@@ -3,6 +3,7 @@ import { body, query, param, validationResult } from 'express-validator';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { AppError } from '../middleware/error.middleware';
 import { orderService } from '../services/order.service';
+import { User } from '../models';
 import { AuthenticatedRequest, OrderStatus } from '../types';
 
 const router = Router();
@@ -159,6 +160,43 @@ router.get(
 );
 
 /**
+ * GET /api/orders/developers
+ * Get all developers for task assignment
+ */
+router.get(
+  '/developers',
+  [query('search').optional().trim()],
+  validateRequest,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const search = req.query.search as string;
+
+      const filter: Record<string, unknown> = { role: 'developer' };
+      if (search) {
+        filter.$or = [
+          { username: { $regex: search, $options: 'i' } },
+          { firstName: { $regex: search, $options: 'i' } },
+          { lastName: { $regex: search, $options: 'i' } },
+          { phoneNumber: { $regex: search, $options: 'i' } },
+        ];
+      }
+
+      const developers = await User.find(filter)
+        .select('_id firstName lastName username phoneNumber')
+        .sort({ firstName: 1 })
+        .lean();
+
+      res.json({
+        success: true,
+        data: developers,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
  * GET /api/orders/:id
  * Get single order
  */
@@ -267,6 +305,69 @@ router.patch(
         req.params.id,
         req.params.milestoneId,
         req.body.status
+      );
+      res.json({
+        success: true,
+        data: order,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
+ * PUT /api/orders/:id/milestones/:milestoneId
+ * Update milestone details
+ */
+router.put(
+  '/:id/milestones/:milestoneId',
+  [
+    param('id').isMongoId().withMessage('Valid order ID is required'),
+    param('milestoneId').isMongoId().withMessage('Valid milestone ID is required'),
+    body('title').optional().trim().isLength({ min: 1, max: 200 }),
+    body('description').optional().trim(),
+    body('amount').optional().isFloat({ min: 0 }),
+    body('percentage').optional().isFloat({ min: 0, max: 100 }),
+    body('dueDate').optional(),
+    body('tasks').optional().isArray(),
+  ],
+  validateRequest,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const order = await orderService.updateMilestone(
+        req.user!.userId,
+        req.params.id,
+        req.params.milestoneId,
+        req.body
+      );
+      res.json({
+        success: true,
+        data: order,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
+ * DELETE /api/orders/:id/milestones/:milestoneId
+ * Delete milestone
+ */
+router.delete(
+  '/:id/milestones/:milestoneId',
+  [
+    param('id').isMongoId().withMessage('Valid order ID is required'),
+    param('milestoneId').isMongoId().withMessage('Valid milestone ID is required'),
+  ],
+  validateRequest,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const order = await orderService.deleteMilestone(
+        req.user!.userId,
+        req.params.id,
+        req.params.milestoneId
       );
       res.json({
         success: true,

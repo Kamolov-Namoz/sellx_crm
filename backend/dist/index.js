@@ -43,7 +43,7 @@ app.use((0, helmet_1.default)({
 app.use((0, cors_1.default)({
     origin: config_1.config.corsOrigin,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 // Body parsing

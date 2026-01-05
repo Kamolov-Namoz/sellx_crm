@@ -11,6 +11,22 @@ export declare class ProjectTaskService {
     }> & {
         __v: number;
     })[]>;
+    getByMilestone(projectId: string, milestoneId: string): Promise<(import("mongoose").Document<unknown, {}, IProjectTask, {}, {}> & IProjectTask & Required<{
+        _id: Types.ObjectId;
+    }> & {
+        __v: number;
+    })[]>;
+    getMilestoneProgress(projectId: string, milestoneId: string): Promise<{
+        tasks: (import("mongoose").Document<unknown, {}, IProjectTask, {}, {}> & IProjectTask & Required<{
+            _id: Types.ObjectId;
+        }> & {
+            __v: number;
+        })[];
+        totalTasks: number;
+        completedTasks: number;
+        avgProgress: number;
+        developers: any[];
+    }>;
     getByDeveloper(developerId: string): Promise<(import("mongoose").Document<unknown, {}, IProjectTask, {}, {}> & IProjectTask & Required<{
         _id: Types.ObjectId;
     }> & {

@@ -5,6 +5,7 @@ const express_validator_1 = require("express-validator");
 const auth_middleware_1 = require("../middleware/auth.middleware");
 const error_middleware_1 = require("../middleware/error.middleware");
 const order_service_1 = require("../services/order.service");
+const models_1 = require("../models");
 const router = (0, express_1.Router)();
 router.use(auth_middleware_1.authMiddleware);
 // Validation middleware
@@ -132,6 +133,35 @@ router.get('/stats', async (req, res, next) => {
         res.json({
             success: true,
             data: stats,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+/**
+ * GET /api/orders/developers
+ * Get all developers for task assignment
+ */
+router.get('/developers', [(0, express_validator_1.query)('search').optional().trim()], validateRequest, async (req, res, next) => {
+    try {
+        const search = req.query.search;
+        const filter = { role: 'developer' };
+        if (search) {
+            filter.$or = [
+                { username: { $regex: search, $options: 'i' } },
+                { firstName: { $regex: search, $options: 'i' } },
+                { lastName: { $regex: search, $options: 'i' } },
+                { phoneNumber: { $regex: search, $options: 'i' } },
+            ];
+        }
+        const developers = await models_1.User.find(filter)
+            .select('_id firstName lastName username phoneNumber')
+            .sort({ firstName: 1 })
+            .lean();
+        res.json({
+            success: true,
+            data: developers,
         });
     }
     catch (error) {

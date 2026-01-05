@@ -14,6 +14,16 @@ router.get('/project/:projectId', auth_middleware_1.authMiddleware, async (req, 
         res.status(500).json({ success: false, message: 'Xatolik yuz berdi' });
     }
 });
+// Bosqich (milestone) bo'yicha vazifalar va progress
+router.get('/project/:projectId/milestone/:milestoneId', auth_middleware_1.authMiddleware, async (req, res) => {
+    try {
+        const result = await projectTask_service_1.projectTaskService.getMilestoneProgress(req.params.projectId, req.params.milestoneId);
+        res.json({ success: true, data: result });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: 'Xatolik yuz berdi' });
+    }
+});
 // Developer uchun o'z vazifalari
 router.get('/my-tasks', auth_middleware_1.authMiddleware, async (req, res) => {
     try {

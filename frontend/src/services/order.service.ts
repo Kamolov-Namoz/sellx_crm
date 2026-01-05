@@ -16,9 +16,24 @@ export interface OrderStats {
   completed: { count: number; totalAmount: number };
 }
 
+export interface Developer {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  phoneNumber?: string;
+}
+
 export const orderService = {
   async getStats(): Promise<ApiResponse<OrderStats>> {
     const response = await api.get<ApiResponse<OrderStats>>('/orders/stats');
+    return response.data;
+  },
+
+  async getDevelopers(search?: string): Promise<ApiResponse<Developer[]>> {
+    const response = await api.get<ApiResponse<Developer[]>>('/orders/developers', { 
+      params: search ? { search } : undefined 
+    });
     return response.data;
   },
 
@@ -55,6 +70,32 @@ export const orderService = {
     const response = await api.patch<ApiResponse<Order>>(
       `/orders/${orderId}/milestones/${milestoneId}`,
       { status }
+    );
+    return response.data;
+  },
+
+  async updateMilestone(
+    orderId: string,
+    milestoneId: string,
+    data: {
+      title?: string;
+      description?: string;
+      amount?: number;
+      percentage?: number;
+      dueDate?: string | null;
+      tasks?: string[];
+    }
+  ): Promise<ApiResponse<Order>> {
+    const response = await api.put<ApiResponse<Order>>(
+      `/orders/${orderId}/milestones/${milestoneId}`,
+      data
+    );
+    return response.data;
+  },
+
+  async deleteMilestone(orderId: string, milestoneId: string): Promise<ApiResponse<Order>> {
+    const response = await api.delete<ApiResponse<Order>>(
+      `/orders/${orderId}/milestones/${milestoneId}`
     );
     return response.data;
   },

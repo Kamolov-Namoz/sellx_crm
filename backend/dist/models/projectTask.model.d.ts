@@ -1,6 +1,7 @@
 import mongoose, { Document } from 'mongoose';
 export interface IProjectTask extends Document {
     projectId: mongoose.Types.ObjectId;
+    milestoneId?: mongoose.Types.ObjectId;
     developerId: mongoose.Types.ObjectId;
     title: string;
     description?: string;

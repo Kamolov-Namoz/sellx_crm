@@ -288,5 +288,36 @@ router.get('/orders', [
         next(error);
     }
 });
+/**
+ * GET /api/admin/developers
+ * Get all developers (users with role='developer')
+ */
+router.get('/developers', [
+    (0, express_validator_1.query)('search').optional().trim(),
+], validateRequest, async (req, res, next) => {
+    try {
+        const search = req.query.search;
+        const filter = { role: 'developer' };
+        if (search) {
+            filter.$or = [
+                { username: { $regex: search, $options: 'i' } },
+                { firstName: { $regex: search, $options: 'i' } },
+                { lastName: { $regex: search, $options: 'i' } },
+                { phoneNumber: { $regex: search, $options: 'i' } },
+            ];
+        }
+        const developers = await models_1.User.find(filter)
+            .select('_id firstName lastName username phoneNumber')
+            .sort({ firstName: 1 })
+            .lean();
+        res.json({
+            success: true,
+            data: developers,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
 exports.default = router;
 //# sourceMappingURL=admin.routes.js.map
