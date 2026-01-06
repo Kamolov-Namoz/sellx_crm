@@ -1,11 +1,11 @@
 import { Types } from 'mongoose';
-import { User, Notification, ProjectTask } from '../models';
+import { User, Notification } from '../models';
 
 export class NotificationService {
   // Notification yaratish
   async create(data: {
     userId: string;
-    type: 'chat_message' | 'new_task' | 'task_completed' | 'project_update';
+    type: 'new_task' | 'task_completed' | 'project_update';
     title: string;
     message: string;
     data?: {
@@ -74,67 +74,6 @@ export class NotificationService {
       { userId: new Types.ObjectId(userId), isRead: false },
       { isRead: true, readAt: new Date() }
     );
-  }
-
-  // Chat xabari uchun notification
-  async notifyChatMessage(data: {
-    projectId: string;
-    projectTitle: string;
-    senderId: string;
-    senderName: string;
-    senderRole: 'user' | 'developer';
-    messagePreview: string;
-  }) {
-    // Loyihadagi barcha ishtirokchilarni topish
-    const tasks = await ProjectTask.find({ 
-      projectId: new Types.ObjectId(data.projectId) 
-    }).populate('developerId', '_id');
-    
-    // Unique developer IDs
-    const developerIds = [...new Set(
-      tasks
-        .filter(t => t.developerId)
-        .map(t => (t.developerId as any)._id.toString())
-    )];
-    
-    // Agar sender developer bo'lsa, seller ga notification
-    // Agar sender seller bo'lsa, developerlarga notification
-    if (data.senderRole === 'developer') {
-      // Seller ga notification - loyiha egasini topish kerak
-      // Bu yerda Order modelidan userId ni olish kerak
-      const { Order } = await import('../models');
-      const order = await Order.findById(data.projectId);
-      if (order && order.userId.toString() !== data.senderId) {
-        await this.create({
-          userId: order.userId.toString(),
-          type: 'chat_message',
-          title: `${data.senderName} xabar yubordi`,
-          message: `${data.projectTitle}: ${data.messagePreview.substring(0, 50)}...`,
-          data: {
-            projectId: data.projectId,
-            senderId: data.senderId,
-            senderName: data.senderName,
-          },
-        });
-      }
-    } else {
-      // Developerlarga notification
-      for (const devId of developerIds) {
-        if (devId !== data.senderId) {
-          await this.create({
-            userId: devId,
-            type: 'chat_message',
-            title: `${data.senderName} xabar yubordi`,
-            message: `${data.projectTitle}: ${data.messagePreview.substring(0, 50)}...`,
-            data: {
-              projectId: data.projectId,
-              senderId: data.senderId,
-              senderName: data.senderName,
-            },
-          });
-        }
-      }
-    }
   }
 
   // Yangi vazifa uchun notification

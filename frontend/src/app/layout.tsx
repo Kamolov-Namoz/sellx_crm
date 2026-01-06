@@ -8,21 +8,21 @@ import InstallPrompt from '@/components/InstallPrompt';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sellx.prox.uz';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://prosell.prox.uz';
 
 export const metadata: Metadata = {
   title: {
-    default: 'SellX - Sales Automation',
-    template: '%s | SellX',
+    default: 'ProSell - Sales Automation',
+    template: '%s | ProSell',
   },
   description: 'Mijozlarni boshqarish va follow-up eslatmalar tizimi',
   manifest: '/manifest.json',
   metadataBase: new URL(siteUrl),
-  applicationName: 'SellX',
+  applicationName: 'ProSell',
   keywords: ['sales', 'crm', 'automation', 'clients', 'follow-up', 'pwa'],
-  authors: [{ name: 'SellX Team' }],
-  creator: 'SellX',
-  publisher: 'SellX',
+  authors: [{ name: 'ProSell Team' }],
+  creator: 'ProSell',
+  publisher: 'ProSell',
   formatDetection: {
     email: false,
     address: false,
@@ -31,19 +31,19 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'SellX',
+    title: 'ProSell',
   },
   openGraph: {
     type: 'website',
     locale: 'uz_UZ',
     url: siteUrl,
-    siteName: 'SellX',
-    title: 'SellX - Sales Automation',
+    siteName: 'ProSell',
+    title: 'ProSell - Sales Automation',
     description: 'Mijozlarni boshqarish va follow-up eslatmalar tizimi',
   },
   twitter: {
     card: 'summary',
-    title: 'SellX - Sales Automation',
+    title: 'ProSell - Sales Automation',
     description: 'Mijozlarni boshqarish va follow-up eslatmalar tizimi',
   },
   robots: {

@@ -33,25 +33,22 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ProjectChat = void 0;
+exports.ServiceCategory = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const projectChatSchema = new mongoose_1.Schema({
-    projectId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Order', required: true },
-    senderId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: true },
-    senderRole: { type: String, enum: ['user', 'developer'], required: true },
-    type: { type: String, enum: ['text', 'audio', 'video', 'image', 'task'], required: true },
-    content: { type: String, required: true },
-    taskId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'ProjectTask' },
-    metadata: {
-        fileName: String,
-        fileSize: Number,
-        duration: Number,
-        mimeType: String,
-    },
-    isRead: { type: Boolean, default: false },
-    readAt: { type: Date },
+const serviceSchema = new mongoose_1.Schema({
+    name: { type: String, required: true },
+    description: { type: String },
+    price: { type: Number, required: true, min: 0 },
+    isActive: { type: Boolean, default: true },
+}, { _id: true });
+const serviceCategorySchema = new mongoose_1.Schema({
+    name: { type: String, required: true, unique: true },
+    description: { type: String },
+    icon: { type: String }, // emoji yoki icon nomi
+    services: [serviceSchema],
+    isActive: { type: Boolean, default: true },
 }, { timestamps: true });
-projectChatSchema.index({ projectId: 1, createdAt: -1 });
-projectChatSchema.index({ senderId: 1 });
-exports.ProjectChat = mongoose_1.default.model('ProjectChat', projectChatSchema);
-//# sourceMappingURL=projectChat.model.js.map
+serviceCategorySchema.index({ name: 1 });
+serviceCategorySchema.index({ isActive: 1 });
+exports.ServiceCategory = mongoose_1.default.model('ServiceCategory', serviceCategorySchema);
+//# sourceMappingURL=serviceCategory.model.js.map

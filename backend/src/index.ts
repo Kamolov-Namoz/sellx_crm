@@ -14,7 +14,7 @@ import orderRoutes from './routes/order.routes';
 import adminRoutes from './routes/admin.routes';
 import employeeRoutes from './routes/employee.routes';
 import projectTaskRoutes from './routes/projectTask.routes';
-import projectChatRoutes from './routes/projectChat.routes';
+import serviceCategoryRoutes from './routes/serviceCategory.routes';
 import { errorHandler } from './middleware/error.middleware';
 import { schedulerService } from './services/scheduler.service';
 
@@ -88,7 +88,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/tasks', projectTaskRoutes);
-app.use('/api/project-chat', projectChatRoutes);
+app.use('/api/service-categories', serviceCategoryRoutes);
 
 // 404 handler
 app.use((_req, res) => {

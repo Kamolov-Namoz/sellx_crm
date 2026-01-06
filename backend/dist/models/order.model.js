@@ -56,6 +56,13 @@ const teamMemberSchema = new mongoose_1.Schema({
     role: { type: String, enum: ['developer', 'team_lead'], default: 'developer' },
     joinedAt: { type: Date, default: Date.now },
 }, { _id: false });
+const selectedServiceSchema = new mongoose_1.Schema({
+    categoryId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'ServiceCategory', required: true },
+    categoryName: { type: String, required: true },
+    serviceId: { type: mongoose_1.Schema.Types.ObjectId, required: true },
+    serviceName: { type: String, required: true },
+    price: { type: Number, required: true, min: 0 },
+}, { _id: false });
 const orderSchema = new mongoose_1.Schema({
     userId: {
         type: mongoose_1.Schema.Types.ObjectId,
@@ -110,6 +117,7 @@ const orderSchema = new mongoose_1.Schema({
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'User',
     },
+    selectedServices: [selectedServiceSchema],
 }, {
     timestamps: true,
 });

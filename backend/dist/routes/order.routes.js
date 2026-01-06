@@ -170,10 +170,26 @@ router.get('/developers', [(0, express_validator_1.query)('search').optional().t
 });
 /**
  * GET /api/orders/:id
- * Get single order
+ * Get single order - seller yoki jamoada bo'lgan developer ko'ra oladi
  */
 router.get('/:id', (0, express_validator_1.param)('id').isMongoId().withMessage('Valid order ID is required'), validateRequest, async (req, res, next) => {
     try {
+        // Avval developer uchun tekshirish
+        if (req.user.role === 'developer') {
+            const order = await order_service_1.orderService.getOrderForDeveloper(req.params.id);
+            // Developer jamoada bormi tekshirish
+            const isInTeam = order.team?.some((m) => m.developerId?._id?.toString() === req.user.userId ||
+                m.developerId?.toString() === req.user.userId);
+            if (!isInTeam) {
+                throw new error_middleware_1.AppError('Sizda bu loyihani ko\'rish huquqi yo\'q', 403, 'FORBIDDEN');
+            }
+            res.json({
+                success: true,
+                data: order,
+            });
+            return;
+        }
+        // Seller uchun
         const order = await order_service_1.orderService.getOrderById(req.user.userId, req.params.id);
         res.json({
             success: true,
@@ -234,14 +250,14 @@ router.delete('/:id', (0, express_validator_1.param)('id').isMongoId().withMessa
 });
 /**
  * PATCH /api/orders/:id/milestones/:milestoneId
- * Update milestone status
+ * Update milestone status - faqat 'paid' statusini belgilash mumkin
  */
 router.patch('/:id/milestones/:milestoneId', [
     (0, express_validator_1.param)('id').isMongoId().withMessage('Valid order ID is required'),
     (0, express_validator_1.param)('milestoneId').isMongoId().withMessage('Valid milestone ID is required'),
     (0, express_validator_1.body)('status')
-        .isIn(['pending', 'in_progress', 'completed', 'paid'])
-        .withMessage('Status must be one of: pending, in_progress, completed, paid'),
+        .isIn(['paid'])
+        .withMessage('Faqat paid statusini belgilash mumkin'),
 ], validateRequest, async (req, res, next) => {
     try {
         const order = await order_service_1.orderService.updateMilestoneStatus(req.user.userId, req.params.id, req.params.milestoneId, req.body.status);

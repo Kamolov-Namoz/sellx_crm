@@ -1,10 +1,10 @@
-# robots.txt for sellx.prox.uz
+# robots.txt for prosell.prox.uz
+
 User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://sellx.prox.uz/sitemap.xml
+Sitemap: https://prosell.prox.uz/sitemap.xml
 
 # Disallow auth pages from indexing
 Disallow: /auth/
-Disallow: /api/

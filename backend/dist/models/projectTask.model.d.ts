@@ -5,6 +5,8 @@ export interface IProjectTask extends Document {
     developerId: mongoose.Types.ObjectId;
     title: string;
     description?: string;
+    serviceId?: string;
+    serviceName?: string;
     attachments?: {
         type: 'audio' | 'video' | 'image';
         url: string;

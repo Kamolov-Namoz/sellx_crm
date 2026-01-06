@@ -37,13 +37,24 @@ export default function LoginPage() {
 
     if (!username.trim()) {
       newErrors.username = 'Foydalanuvchi nomi kiritilishi shart';
+    } else if (username.length < 3) {
+      newErrors.username = 'Foydalanuvchi nomi kamida 3 ta belgidan iborat bo\'lishi kerak';
     }
 
     if (!password) {
       newErrors.password = 'Parol kiritilishi shart';
+    } else if (password.length < 6) {
+      newErrors.password = 'Parol kamida 6 ta belgidan iborat bo\'lishi kerak';
     }
 
     setErrors(newErrors);
+    
+    // Agar xato bo'lsa, birinchi xatoni toast qilish
+    if (Object.keys(newErrors).length > 0) {
+      const firstError = Object.values(newErrors)[0];
+      toast.error(firstError || 'Ma\'lumotlarni to\'g\'ri kiriting');
+    }
+    
     return Object.keys(newErrors).length === 0;
   };
 

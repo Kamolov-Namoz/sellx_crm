@@ -22,11 +22,21 @@ export interface ITeamMember {
   joinedAt: Date;
 }
 
+// Tanlangan xizmat interfeysi
+export interface ISelectedService {
+  categoryId: mongoose.Types.ObjectId;
+  categoryName: string;
+  serviceId: mongoose.Types.ObjectId;
+  serviceName: string;
+  price: number;
+}
+
 export interface OrderDocument extends Omit<IOrder, '_id'>, Document {
   milestones?: IMilestone[];
   totalPaid?: number;
   team?: ITeamMember[];
   teamLeadId?: mongoose.Types.ObjectId;
+  selectedServices?: ISelectedService[];
 }
 
 const ORDER_STATUSES: OrderStatus[] = ['in_progress', 'completed'];
@@ -55,6 +65,17 @@ const teamMemberSchema = new Schema<ITeamMember>(
     developerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     role: { type: String, enum: ['developer', 'team_lead'], default: 'developer' },
     joinedAt: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
+
+const selectedServiceSchema = new Schema<ISelectedService>(
+  {
+    categoryId: { type: Schema.Types.ObjectId, ref: 'ServiceCategory', required: true },
+    categoryName: { type: String, required: true },
+    serviceId: { type: Schema.Types.ObjectId, required: true },
+    serviceName: { type: String, required: true },
+    price: { type: Number, required: true, min: 0 },
   },
   { _id: false }
 );
@@ -114,6 +135,7 @@ const orderSchema = new Schema<OrderDocument>(
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
+    selectedServices: [selectedServiceSchema],
   },
   {
     timestamps: true,

@@ -19,7 +19,7 @@ const order_routes_1 = __importDefault(require("./routes/order.routes"));
 const admin_routes_1 = __importDefault(require("./routes/admin.routes"));
 const employee_routes_1 = __importDefault(require("./routes/employee.routes"));
 const projectTask_routes_1 = __importDefault(require("./routes/projectTask.routes"));
-const projectChat_routes_1 = __importDefault(require("./routes/projectChat.routes"));
+const serviceCategory_routes_1 = __importDefault(require("./routes/serviceCategory.routes"));
 const error_middleware_1 = require("./middleware/error.middleware");
 const scheduler_service_1 = require("./services/scheduler.service");
 const app = (0, express_1.default)();
@@ -83,7 +83,7 @@ app.use('/api/orders', order_routes_1.default);
 app.use('/api/admin', admin_routes_1.default);
 app.use('/api/employees', employee_routes_1.default);
 app.use('/api/tasks', projectTask_routes_1.default);
-app.use('/api/project-chat', projectChat_routes_1.default);
+app.use('/api/service-categories', serviceCategory_routes_1.default);
 // 404 handler
 app.use((_req, res) => {
     res.status(404).json({

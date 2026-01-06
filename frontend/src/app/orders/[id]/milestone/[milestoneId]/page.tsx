@@ -6,7 +6,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { useToast } from '@/contexts/ToastContext';
 import { orderService } from '@/services/order.service';
 import { projectTaskService, ProjectTask, MilestoneProgress } from '@/services/projectTask.service';
-import { Order, Milestone, MILESTONE_STATUS_LABELS, MILESTONE_STATUS_COLORS, MilestoneStatus } from '@/types';
+import { Order, Milestone, MILESTONE_STATUS_LABELS, MILESTONE_STATUS_COLORS } from '@/types';
 
 function MilestoneTrackingContent() {
   const params = useParams();
@@ -50,10 +50,15 @@ function MilestoneTrackingContent() {
     loadData();
   }, [params.id, params.milestoneId]);
 
-  const handleStatusChange = async (newStatus: MilestoneStatus) => {
+  const handleMarkAsPaid = async () => {
+    // Faqat completed bo'lganda paid qilish mumkin
+    if (milestone?.status !== 'completed') {
+      toast.error('Faqat bajarilgan bosqichni to\'langan deb belgilash mumkin');
+      return;
+    }
     try {
-      await orderService.updateMilestoneStatus(params.id as string, params.milestoneId as string, newStatus);
-      toast.success('Status yangilandi');
+      await orderService.updateMilestoneStatus(params.id as string, params.milestoneId as string, 'paid');
+      toast.success('To\'lov tasdiqlandi');
       loadData();
     } catch {
       toast.error('Xatolik');
@@ -138,18 +143,10 @@ function MilestoneTrackingContent() {
               )}
             </div>
 
-            {/* Status Action */}
-            {milestone.status === 'in_progress' && (
-              <button
-                onClick={() => handleStatusChange('completed')}
-                className="px-3 py-2 bg-green-500/20 text-green-400 rounded-lg text-sm"
-              >
-                ✓ Bajarildi
-              </button>
-            )}
+            {/* Status Action - faqat To'landi tugmasi */}
             {milestone.status === 'completed' && (
               <button
-                onClick={() => handleStatusChange('paid')}
+                onClick={handleMarkAsPaid}
                 className="px-3 py-2 bg-purple-500/20 text-purple-400 rounded-lg text-sm"
               >
                 💰 To'landi
@@ -247,6 +244,7 @@ function MilestoneTrackingContent() {
           projectId={params.id as string}
           milestoneId={params.milestoneId as string}
           teamMembers={order.team || []}
+          selectedServices={order.selectedServices}
           onClose={() => setShowAddTask(false)}
           onSuccess={() => { setShowAddTask(false); loadData(); }}
         />
@@ -310,6 +308,11 @@ function TaskCard({ task, onUpdate, onEdit }: { task: ProjectTask; onUpdate: () 
 
         <div className="flex-1 min-w-0">
           <h3 className="text-white font-medium">{task.title}</h3>
+          {task.serviceName && (
+            <span className="inline-block text-xs px-2 py-0.5 bg-primary-500/20 text-primary-400 rounded mt-1">
+              {task.serviceName}
+            </span>
+          )}
           {task.description && (
             <p className="text-sm text-gray-400 mt-1 line-clamp-2">{task.description}</p>
           )}
@@ -367,25 +370,40 @@ function TaskCard({ task, onUpdate, onEdit }: { task: ProjectTask; onUpdate: () 
   );
 }
 
-// Add Task Modal - faqat loyiha jamoasidagi dasturchilardan tanlash
+// Add Task Modal - loyihaga tanlangan xizmatlardan vazifa yaratish
 function AddTaskModal({ 
   projectId, 
   milestoneId, 
   teamMembers,
+  selectedServices,
   onClose, 
   onSuccess 
 }: { 
   projectId: string;
   milestoneId: string;
   teamMembers: { developerId: { _id: string; firstName: string; lastName: string; username: string }; role: string }[];
+  selectedServices?: { categoryId: string; categoryName: string; serviceId: string; serviceName: string; price: number }[];
   onClose: () => void;
   onSuccess: () => void;
 }) {
   const toast = useToast();
   const [selectedDev, setSelectedDev] = useState<string>('');
+  const [selectedService, setSelectedService] = useState<string>('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
+  const [useCustomTitle, setUseCustomTitle] = useState(false);
+
+  // Xizmat tanlaganda title avtomatik to'ldiriladi
+  const handleServiceSelect = (serviceId: string) => {
+    setSelectedService(serviceId);
+    if (!useCustomTitle) {
+      const service = selectedServices?.find(s => s.serviceId === serviceId);
+      if (service) {
+        setTitle(service.serviceName);
+      }
+    }
+  };
 
   const handleSubmit = async () => {
     if (!selectedDev || !title.trim()) {
@@ -395,12 +413,15 @@ function AddTaskModal({
     
     setSaving(true);
     try {
+      const service = selectedServices?.find(s => s.serviceId === selectedService);
       await projectTaskService.create({
         projectId,
         milestoneId,
         developerId: selectedDev,
         title: title.trim(),
         description: description.trim() || undefined,
+        serviceId: selectedService || undefined,
+        serviceName: service?.serviceName,
       });
       toast.success('Vazifa qo\'shildi');
       onSuccess();
@@ -410,6 +431,15 @@ function AddTaskModal({
       setSaving(false);
     }
   };
+
+  // Xizmatlarni kategoriya bo'yicha guruhlash
+  const groupedServices = selectedServices?.reduce((acc, service) => {
+    if (!acc[service.categoryName]) {
+      acc[service.categoryName] = [];
+    }
+    acc[service.categoryName].push(service);
+    return acc;
+  }, {} as Record<string, typeof selectedServices>);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
@@ -426,13 +456,62 @@ function AddTaskModal({
         </div>
         
         <div className="p-4 space-y-4 overflow-y-auto max-h-[70vh]">
+          {/* Xizmat tanlash - agar loyihada xizmatlar bo'lsa */}
+          {selectedServices && selectedServices.length > 0 && (
+            <div>
+              <label className="block text-sm text-gray-400 mb-1.5">Xizmat tanlang</label>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {Object.entries(groupedServices || {}).map(([categoryName, services]) => (
+                  <div key={categoryName}>
+                    <p className="text-xs text-gray-500 mb-1">{categoryName}</p>
+                    {services?.map(service => (
+                      <button
+                        key={service.serviceId}
+                        type="button"
+                        onClick={() => handleServiceSelect(service.serviceId)}
+                        className={`w-full flex items-center justify-between p-2.5 rounded-lg mb-1 transition ${
+                          selectedService === service.serviceId 
+                            ? 'ring-2 ring-primary-500 bg-primary-500/10' 
+                            : ''
+                        }`}
+                        style={{ backgroundColor: selectedService === service.serviceId ? undefined : '#2d3848' }}
+                      >
+                        <span className="text-white text-sm">{service.serviceName}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-primary-400">{service.price.toLocaleString()} so'm</span>
+                          {selectedService === service.serviceId && (
+                            <svg className="w-4 h-4 text-primary-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Boshqa vazifa qo'shish */}
+              <button
+                type="button"
+                onClick={() => { setSelectedService(''); setUseCustomTitle(true); setTitle(''); }}
+                className={`w-full mt-2 p-2.5 rounded-lg text-sm text-left transition ${
+                  useCustomTitle && !selectedService ? 'ring-2 ring-primary-500 bg-primary-500/10' : ''
+                }`}
+                style={{ backgroundColor: useCustomTitle && !selectedService ? undefined : '#2d3848' }}
+              >
+                <span className="text-gray-400">+ Boshqa vazifa (ro'yxatda yo'q)</span>
+              </button>
+            </div>
+          )}
+
           {/* Vazifa nomi */}
           <div>
             <label className="block text-sm text-gray-400 mb-1.5">Vazifa nomi *</label>
             <input
               type="text"
               value={title}
-              onChange={e => setTitle(e.target.value)}
+              onChange={e => { setTitle(e.target.value); setUseCustomTitle(true); }}
               placeholder="Masalan: Login sahifasini yaratish"
               className="w-full rounded-lg px-3 py-2.5 text-white border-0 outline-none focus:ring-2 focus:ring-primary-500"
               style={{ backgroundColor: '#2d3848' }}
@@ -536,7 +615,7 @@ export default function MilestoneTrackingPage() {
   );
 }
 
-// Edit Task Modal
+// Edit Task Modal - faqat title va description o'zgartirish mumkin
 function EditTaskModal({ 
   task,
   onClose, 
@@ -549,7 +628,6 @@ function EditTaskModal({
   const toast = useToast();
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || '');
-  const [status, setStatus] = useState(task.status);
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -564,7 +642,6 @@ function EditTaskModal({
       await projectTaskService.update(task._id, {
         title: title.trim(),
         description: description.trim() || undefined,
-        status,
       });
       toast.success('Vazifa yangilandi');
       onSuccess();
@@ -597,10 +674,22 @@ function EditTaskModal({
             <div className="w-10 h-10 bg-primary-500/30 rounded-full flex items-center justify-center">
               <span className="text-primary-400">{dev?.firstName?.[0]}{dev?.lastName?.[0]}</span>
             </div>
-            <div>
+            <div className="flex-1">
               <p className="text-white text-sm">{dev?.firstName} {dev?.lastName}</p>
               <p className="text-xs text-gray-500">Dasturchi</p>
             </div>
+            <span className={`text-xs px-2 py-1 rounded ${
+              task.isAccepted ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'
+            }`}>
+              {task.isAccepted ? 'Bajarildi' : 'Jarayonda'}
+            </span>
+          </div>
+
+          {/* Status haqida izoh */}
+          <div className="bg-dark-700 rounded-lg p-3">
+            <p className="text-xs text-gray-500">
+              💡 Vazifa statusi avtomatik o'zgaradi: dasturchi "Bajarildi" tugmasini bosganda tugallangan hisoblanadi.
+            </p>
           </div>
 
           {/* Vazifa nomi */}
@@ -625,40 +714,6 @@ function EditTaskModal({
               className="w-full rounded-lg px-3 py-2.5 text-white resize-none border-0 outline-none focus:ring-2 focus:ring-primary-500"
               style={{ backgroundColor: '#2d3848' }}
             />
-          </div>
-
-          {/* Status */}
-          <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Status</label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setStatus('in_progress')}
-                className={`py-2.5 rounded-lg text-sm font-medium transition ${
-                  status === 'in_progress' 
-                    ? 'bg-blue-500/30 text-blue-300 ring-2 ring-blue-500' 
-                    : 'text-gray-400'
-                }`}
-                style={{ backgroundColor: status === 'in_progress' ? undefined : '#2d3848' }}
-              >
-                Jarayonda
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatus('completed')}
-                className={`py-2.5 rounded-lg text-sm font-medium transition ${
-                  status === 'completed' 
-                    ? 'bg-green-500/30 text-green-300 ring-2 ring-green-500' 
-                    : 'text-gray-400'
-                }`}
-                style={{ backgroundColor: status === 'completed' ? undefined : '#2d3848' }}
-              >
-                Bajarildi
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              * Dasturchi o'zi ham statusni o'zgartirishi mumkin
-            </p>
           </div>
           
           {/* Buttons */}

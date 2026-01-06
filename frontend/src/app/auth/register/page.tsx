@@ -80,6 +80,13 @@ export default function RegisterPage() {
     }
 
     setErrors(newErrors);
+    
+    // Agar xato bo'lsa, birinchi xatoni toast qilish
+    if (Object.keys(newErrors).length > 0) {
+      const firstError = Object.values(newErrors)[0];
+      toast.error(firstError || 'Ma\'lumotlarni to\'g\'ri kiriting');
+    }
+    
     return Object.keys(newErrors).length === 0;
   };
 

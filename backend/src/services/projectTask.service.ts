@@ -1,6 +1,7 @@
 import { Types } from 'mongoose';
 import { ProjectTask, IProjectTask, Order } from '../models';
 import { notificationService } from './notification.service';
+import { AppError } from '../middleware/error.middleware';
 
 export class ProjectTaskService {
   // Vazifani ID bo'yicha olish
@@ -9,6 +10,20 @@ export class ProjectTaskService {
   }
 
   async create(data: Partial<IProjectTask>) {
+    // Developer loyiha jamoasida ekanligini tekshirish
+    const order = await Order.findById(data.projectId);
+    if (!order) {
+      throw new AppError('Loyiha topilmadi', 404, 'PROJECT_NOT_FOUND');
+    }
+    
+    const isInTeam = order.team?.some(
+      (m) => m.developerId.toString() === data.developerId?.toString()
+    );
+    
+    if (!isInTeam) {
+      throw new AppError('Dasturchi loyiha jamoasida emas. Avval jamoaga qo\'shing.', 400, 'NOT_IN_TEAM');
+    }
+
     const task = new ProjectTask({
       ...data,
       projectId: new Types.ObjectId(data.projectId as unknown as string),
@@ -17,22 +32,22 @@ export class ProjectTaskService {
     });
     const savedTask = await task.save();
     
+    // Loyiha va bosqich statuslarini yangilash
+    await this.updateProjectProgress(data.projectId as unknown as string);
+    
     // Notification yuborish
     try {
-      const project = await Order.findById(data.projectId).populate('userId', 'firstName lastName');
-      if (project) {
-        const seller = project.userId as any;
-        const sellerName = seller ? `${seller.firstName} ${seller.lastName}` : 'Seller';
-        
-        await notificationService.notifyNewTask({
-          projectId: data.projectId as unknown as string,
-          projectTitle: project.title,
-          taskId: savedTask._id.toString(),
-          taskTitle: savedTask.title,
-          developerId: data.developerId as unknown as string,
-          assignedBy: sellerName,
-        });
-      }
+      const seller = order.userId as any;
+      const sellerName = seller ? `${seller.firstName} ${seller.lastName}` : 'Seller';
+      
+      await notificationService.notifyNewTask({
+        projectId: data.projectId as unknown as string,
+        projectTitle: order.title,
+        taskId: savedTask._id.toString(),
+        taskTitle: savedTask.title,
+        developerId: data.developerId as unknown as string,
+        assignedBy: sellerName,
+      });
     } catch (err) {
       console.error('Notification yuborishda xatolik:', err);
     }
@@ -216,7 +231,7 @@ export class ProjectTaskService {
     }).populate('developerId', 'firstName lastName');
     
     if (!task) {
-      throw new Error('Vazifa topilmadi');
+      throw new AppError('Vazifa topilmadi', 404, 'TASK_NOT_FOUND');
     }
     
     task.progress = 100;
@@ -278,15 +293,18 @@ export class ProjectTaskService {
   }
 
   // Loyihaning umumiy progressini hisoblash va statusini yangilash
+  // Shuningdek bosqichlar statusini ham avtomatik yangilaydi
   async updateProjectProgress(projectId: string) {
     const tasks = await ProjectTask.find({ projectId: new Types.ObjectId(projectId) });
+    const order = await Order.findById(projectId);
+    
+    if (!order) return;
     
     // Agar vazifa yo'q bo'lsa, loyiha jarayonda
     if (tasks.length === 0) {
-      await Order.findByIdAndUpdate(projectId, {
-        progress: 0,
-        status: 'in_progress',
-      });
+      order.progress = 0;
+      order.status = 'in_progress';
+      await order.save();
       return;
     }
     
@@ -296,10 +314,42 @@ export class ProjectTaskService {
     // Agar barcha vazifalar tasdiqlangan bo'lsa - completed, aks holda - in_progress
     const allAccepted = tasks.length > 0 && tasks.every(task => task.isAccepted);
     
-    await Order.findByIdAndUpdate(projectId, {
-      progress: avgProgress,
-      status: allAccepted ? 'completed' : 'in_progress',
-    });
+    order.progress = avgProgress;
+    order.status = allAccepted ? 'completed' : 'in_progress';
+    
+    // Bosqichlar statusini avtomatik yangilash (faqat 'paid' bo'lmaganlarini)
+    if (order.milestones && order.milestones.length > 0) {
+      for (const milestone of order.milestones) {
+        // Agar bosqich allaqachon to'langan bo'lsa, o'zgartirmaymiz
+        if (milestone.status === 'paid') continue;
+        
+        // Bu bosqichga tegishli vazifalarni topish
+        const milestoneTasks = tasks.filter(t => 
+          t.milestoneId?.toString() === milestone._id?.toString()
+        );
+        
+        if (milestoneTasks.length === 0) {
+          // Vazifa yo'q - pending
+          milestone.status = 'pending';
+        } else {
+          const allMilestoneTasksAccepted = milestoneTasks.every(t => t.isAccepted);
+          const anyMilestoneTaskExists = milestoneTasks.length > 0;
+          
+          if (allMilestoneTasksAccepted) {
+            // Barcha vazifalar bajarilgan - completed
+            milestone.status = 'completed';
+            milestone.completedAt = new Date();
+          } else if (anyMilestoneTaskExists) {
+            // Kamida bitta vazifa bor - in_progress
+            milestone.status = 'in_progress';
+          } else {
+            milestone.status = 'pending';
+          }
+        }
+      }
+    }
+    
+    await order.save();
   }
 
   async getProjectProgress(projectId: string) {

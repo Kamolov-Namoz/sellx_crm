@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export type NotificationType = 'chat_message' | 'new_task' | 'task_completed' | 'project_update';
+export type NotificationType = 'new_task' | 'task_completed' | 'project_update';
 
 export interface INotification extends Document {
   userId: mongoose.Types.ObjectId; // Kimga notification
@@ -24,7 +24,7 @@ const notificationSchema = new Schema<INotification>(
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     type: { 
       type: String, 
-      enum: ['chat_message', 'new_task', 'task_completed', 'project_update'], 
+      enum: ['new_task', 'task_completed', 'project_update'], 
       required: true 
     },
     title: { type: String, required: true },

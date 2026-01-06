@@ -154,6 +154,15 @@ export interface MilestoneInput {
   tasks?: string[];
 }
 
+// Selected Service type
+export interface SelectedServiceInput {
+  categoryId: string;
+  categoryName: string;
+  serviceId: string;
+  serviceName: string;
+  price: number;
+}
+
 // Order request types
 export interface CreateOrderRequest {
   clientId: string;
@@ -162,6 +171,7 @@ export interface CreateOrderRequest {
   amount?: number;
   status?: OrderStatus;
   milestones?: MilestoneInput[];
+  selectedServices?: SelectedServiceInput[];
 }
 
 export interface UpdateOrderRequest {

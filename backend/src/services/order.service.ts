@@ -28,6 +28,7 @@ export class OrderService {
       status: 'in_progress', // Loyiha yaratilganda avtomatik jarayonda
       milestones: data.milestones || [],
       totalPaid: 0,
+      selectedServices: data.selectedServices || [],
     });
 
     await order.save();
@@ -106,15 +107,18 @@ export class OrderService {
   }
 
   /**
-   * Update order
+   * Update order - status avtomatik hisoblanadi, qo'lda o'zgartirib bo'lmaydi
    */
   async updateOrder(userId: string, orderId: string, data: UpdateOrderRequest) {
+    // Status ni o'zgartirishga ruxsat bermaymiz - u avtomatik hisoblanadi
+    const { status, ...safeData } = data as any;
+    
     const order = await Order.findOneAndUpdate(
       {
         _id: orderId,
         userId: new mongoose.Types.ObjectId(userId),
       },
-      { $set: data },
+      { $set: safeData },
       { new: true, runValidators: true }
     )
       .populate('clientId', 'fullName companyName phoneNumber')
@@ -223,14 +227,20 @@ export class OrderService {
   }
 
   /**
-   * Update milestone status
+   * Update milestone status - faqat 'paid' statusini qo'lda o'zgartirish mumkin
+   * Boshqa statuslar (pending, in_progress, completed) avtomatik hisoblanadi
    */
   async updateMilestoneStatus(
     userId: string,
     orderId: string,
     milestoneId: string,
-    status: 'pending' | 'in_progress' | 'completed' | 'paid'
+    status: 'paid'
   ) {
+    // Faqat 'paid' statusini qabul qilamiz
+    if (status !== 'paid') {
+      throw new AppError('Faqat to\'landi statusini belgilash mumkin', 400, 'INVALID_STATUS');
+    }
+
     const order = await Order.findOne({
       _id: orderId,
       userId: new mongoose.Types.ObjectId(userId),
@@ -248,26 +258,18 @@ export class OrderService {
       throw new AppError('Milestone not found', 404, 'MILESTONE_NOT_FOUND');
     }
 
-    milestone.status = status;
-    
-    if (status === 'completed') {
-      milestone.completedAt = new Date();
-    } else if (status === 'paid') {
-      milestone.paidAt = new Date();
-      // Update totalPaid
-      const totalPaid = order.milestones
-        ?.filter((m) => m.status === 'paid')
-        .reduce((sum, m) => sum + m.amount, 0) || 0;
-      order.totalPaid = totalPaid + milestone.amount;
+    // Faqat completed bo'lgan bosqichni paid qilish mumkin
+    if (milestone.status !== 'completed') {
+      throw new AppError('Faqat bajarilgan bosqichni to\'langan deb belgilash mumkin', 400, 'MILESTONE_NOT_COMPLETED');
     }
 
-    // Update order progress based on milestones
-    if (order.milestones && order.milestones.length > 0) {
-      const completedOrPaid = order.milestones.filter(
-        (m) => m.status === 'completed' || m.status === 'paid'
-      ).length;
-      order.progress = Math.round((completedOrPaid / order.milestones.length) * 100);
-    }
+    milestone.status = 'paid';
+    milestone.paidAt = new Date();
+    
+    // totalPaid ni qayta hisoblash
+    order.totalPaid = order.milestones
+      ?.filter((m) => m.status === 'paid')
+      .reduce((sum, m) => sum + m.amount, 0) || 0;
 
     await order.save();
     return order.toObject();
@@ -321,7 +323,7 @@ export class OrderService {
   }
 
   /**
-   * Delete milestone
+   * Delete milestone - vazifalar bo'lsa o'chirishga ruxsat bermaydi
    */
   async deleteMilestone(userId: string, orderId: string, milestoneId: string) {
     const order = await Order.findOne({
@@ -331,6 +333,17 @@ export class OrderService {
 
     if (!order) {
       throw new AppError('Order not found', 404, 'ORDER_NOT_FOUND');
+    }
+
+    // Bosqichga tegishli vazifalar bormi tekshirish
+    const { ProjectTask } = await import('../models');
+    const tasksCount = await ProjectTask.countDocuments({
+      projectId: new mongoose.Types.ObjectId(orderId),
+      milestoneId: new mongoose.Types.ObjectId(milestoneId),
+    });
+
+    if (tasksCount > 0) {
+      throw new AppError(`Bu bosqichda ${tasksCount} ta vazifa bor. Avval vazifalarni o'chiring.`, 400, 'MILESTONE_HAS_TASKS');
     }
 
     order.milestones = order.milestones?.filter(

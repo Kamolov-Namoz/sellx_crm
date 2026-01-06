@@ -34,7 +34,7 @@ export declare class OrderService {
         __v: number;
     }>;
     /**
-     * Update order
+     * Update order - status avtomatik hisoblanadi, qo'lda o'zgartirib bo'lmaydi
      */
     updateOrder(userId: string, orderId: string, data: UpdateOrderRequest): Promise<mongoose.FlattenMaps<import("../models").OrderDocument> & Required<{
         _id: mongoose.Types.ObjectId;
@@ -73,9 +73,10 @@ export declare class OrderService {
         };
     }>;
     /**
-     * Update milestone status
+     * Update milestone status - faqat 'paid' statusini qo'lda o'zgartirish mumkin
+     * Boshqa statuslar (pending, in_progress, completed) avtomatik hisoblanadi
      */
-    updateMilestoneStatus(userId: string, orderId: string, milestoneId: string, status: 'pending' | 'in_progress' | 'completed' | 'paid'): Promise<import("../models").OrderDocument & Required<{
+    updateMilestoneStatus(userId: string, orderId: string, milestoneId: string, status: 'paid'): Promise<import("../models").OrderDocument & Required<{
         _id: mongoose.Types.ObjectId;
     }> & {
         __v: number;
@@ -96,7 +97,7 @@ export declare class OrderService {
         __v: number;
     }>;
     /**
-     * Delete milestone
+     * Delete milestone - vazifalar bo'lsa o'chirishga ruxsat bermaydi
      */
     deleteMilestone(userId: string, orderId: string, milestoneId: string): Promise<import("../models").OrderDocument & Required<{
         _id: mongoose.Types.ObjectId;

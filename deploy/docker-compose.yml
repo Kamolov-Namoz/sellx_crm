@@ -4,19 +4,19 @@ services:
   # MongoDB Database
   mongodb:
     image: mongo:4.4
-    container_name: sellx-mongodb
+    container_name: prosell-mongodb
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-changeme}
       MONGO_INITDB_DATABASE: sales-automation
-      MONGO_USER: ${MONGO_USER:-sellx}
-      MONGO_PASSWORD: ${MONGO_PASSWORD:-sellxpassword}
+      MONGO_USER: ${MONGO_USER:-prosell}
+      MONGO_PASSWORD: ${MONGO_PASSWORD:-prosellpassword}
     volumes:
       - mongodb_data:/data/db
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     networks:
-      - sellx-network
+      - prosell-network
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongo localhost:27017/test --quiet
       interval: 10s
@@ -28,22 +28,22 @@ services:
     build:
       context: ../backend
       dockerfile: ../deploy/Dockerfile.backend
-    container_name: sellx-backend
+    container_name: prosell-backend
     restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 9999
-      MONGODB_URI: mongodb://${MONGO_USER:-sellx}:${MONGO_PASSWORD:-sellxpassword}@mongodb:27017/sales-automation?authSource=sales-automation
+      MONGODB_URI: mongodb://${MONGO_USER:-prosell}:${MONGO_PASSWORD:-prosellpassword}@mongodb:27017/sales-automation?authSource=sales-automation
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: 24h
-      CORS_ORIGIN: https://sellx.prox.uz
+      CORS_ORIGIN: https://prosell.prox.uz
     volumes:
       - uploads_data:/app/uploads
     depends_on:
       mongodb:
         condition: service_healthy
     networks:
-      - sellx-network
+      - prosell-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9999/health"]
       interval: 30s
@@ -56,15 +56,15 @@ services:
       context: ../frontend
       dockerfile: ../deploy/Dockerfile.frontend
       args:
-        NEXT_PUBLIC_API_URL: https://sellx.prox.uz/api
-    container_name: sellx-frontend
+        NEXT_PUBLIC_API_URL: https://prosell.prox.uz/api
+    container_name: prosell-frontend
     restart: unless-stopped
     environment:
       NODE_ENV: production
     depends_on:
       - backend
     networks:
-      - sellx-network
+      - prosell-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9090"]
       interval: 30s
@@ -74,7 +74,7 @@ services:
   # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
-    container_name: sellx-nginx
+    container_name: prosell-nginx
     restart: unless-stopped
     ports:
       - "80:80"
@@ -87,10 +87,10 @@ services:
       - frontend
       - backend
     networks:
-      - sellx-network
+      - prosell-network
 
 networks:
-  sellx-network:
+  prosell-network:
     driver: bridge
 
 volumes:

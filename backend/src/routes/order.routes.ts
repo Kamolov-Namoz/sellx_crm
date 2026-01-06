@@ -198,7 +198,7 @@ router.get(
 
 /**
  * GET /api/orders/:id
- * Get single order
+ * Get single order - seller yoki jamoada bo'lgan developer ko'ra oladi
  */
 router.get(
   '/:id',
@@ -206,6 +206,28 @@ router.get(
   validateRequest,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
+      // Avval developer uchun tekshirish
+      if (req.user!.role === 'developer') {
+        const order = await orderService.getOrderForDeveloper(req.params.id);
+        
+        // Developer jamoada bormi tekshirish
+        const isInTeam = order.team?.some(
+          (m: any) => m.developerId?._id?.toString() === req.user!.userId || 
+                      m.developerId?.toString() === req.user!.userId
+        );
+        
+        if (!isInTeam) {
+          throw new AppError('Sizda bu loyihani ko\'rish huquqi yo\'q', 403, 'FORBIDDEN');
+        }
+        
+        res.json({
+          success: true,
+          data: order,
+        });
+        return;
+      }
+      
+      // Seller uchun
       const order = await orderService.getOrderById(req.user!.userId, req.params.id);
       res.json({
         success: true,
@@ -286,7 +308,7 @@ router.delete(
 
 /**
  * PATCH /api/orders/:id/milestones/:milestoneId
- * Update milestone status
+ * Update milestone status - faqat 'paid' statusini belgilash mumkin
  */
 router.patch(
   '/:id/milestones/:milestoneId',
@@ -294,8 +316,8 @@ router.patch(
     param('id').isMongoId().withMessage('Valid order ID is required'),
     param('milestoneId').isMongoId().withMessage('Valid milestone ID is required'),
     body('status')
-      .isIn(['pending', 'in_progress', 'completed', 'paid'])
-      .withMessage('Status must be one of: pending, in_progress, completed, paid'),
+      .isIn(['paid'])
+      .withMessage('Faqat paid statusini belgilash mumkin'),
   ],
   validateRequest,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {

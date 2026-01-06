@@ -72,6 +72,15 @@ export interface TeamMember {
   joinedAt: string;
 }
 
+// Selected service type (Tanlangan xizmat)
+export interface SelectedService {
+  categoryId: string;
+  categoryName: string;
+  serviceId: string;
+  serviceName: string;
+  price: number;
+}
+
 // Project type (Loyiha)
 export interface Project {
   _id: string;
@@ -91,6 +100,7 @@ export interface Project {
     lastName: string;
     username: string;
   };
+  selectedServices?: SelectedService[];
   createdAt: string;
   updatedAt: string;
 }

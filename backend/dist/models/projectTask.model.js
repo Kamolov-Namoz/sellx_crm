@@ -41,6 +41,8 @@ const projectTaskSchema = new mongoose_1.Schema({
     developerId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true },
     description: { type: String },
+    serviceId: { type: String }, // Tanlangan xizmat ID
+    serviceName: { type: String }, // Xizmat nomi
     attachments: [{
             type: { type: String, enum: ['audio', 'video', 'image'] },
             url: String,

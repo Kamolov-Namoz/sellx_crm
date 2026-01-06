@@ -1,4 +1,4 @@
-# SellX CRM + PM
+# ProSell CRM + PM
 
 Savdogarlar uchun CRM + PM tizimi - Mijozlarni boshqarish, zakazlar va follow-up eslatmalar.
 
@@ -72,7 +72,7 @@ sudo ./deploy.sh
 ## 📁 Loyiha strukturasi
 
 ```
-sellx_crm/
+prosell_crm/
 ├── backend/
 │   ├── src/
 │   │   ├── config/
@@ -168,12 +168,12 @@ PORT=9999
 NODE_ENV=production
 MONGODB_URI=mongodb://...
 JWT_SECRET=your-secret-key
-CORS_ORIGIN=https://sellx.prox.uz
+CORS_ORIGIN=https://prosell.prox.uz
 ```
 
 ### Frontend (.env.local)
 ```
-NEXT_PUBLIC_API_URL=https://sellx.prox.uz/api
+NEXT_PUBLIC_API_URL=https://prosell.prox.uz/api
 ```
 
 ## 📄 Litsenziya

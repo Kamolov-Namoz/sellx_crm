@@ -19,7 +19,7 @@ const nextConfig = {
   
   // Image optimization
   images: {
-    domains: ['sellx.prox.uz'],
+    domains: ['prosell.prox.uz'],
     unoptimized: false,
   },
 

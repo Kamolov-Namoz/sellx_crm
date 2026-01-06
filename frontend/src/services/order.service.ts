@@ -75,7 +75,7 @@ export const orderService = {
   async updateMilestoneStatus(
     orderId: string,
     milestoneId: string,
-    status: MilestoneStatus
+    status: 'paid'
   ): Promise<ApiResponse<Order>> {
     const response = await api.patch<ApiResponse<Order>>(
       `/orders/${orderId}/milestones/${milestoneId}`,

@@ -6,6 +6,9 @@ export interface IProjectTask extends Document {
   developerId: mongoose.Types.ObjectId; // Developer (User with role='developer')
   title: string; // Vazifa nomi
   description?: string;
+  // Tanlangan xizmat (agar loyihada xizmatlar bo'lsa)
+  serviceId?: string;
+  serviceName?: string;
   // Media attachments - audio/video/image
   attachments?: {
     type: 'audio' | 'video' | 'image';
@@ -31,6 +34,8 @@ const projectTaskSchema = new Schema<IProjectTask>(
     developerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true },
     description: { type: String },
+    serviceId: { type: String }, // Tanlangan xizmat ID
+    serviceName: { type: String }, // Xizmat nomi
     attachments: [{
       type: { type: String, enum: ['audio', 'video', 'image'] },
       url: String,

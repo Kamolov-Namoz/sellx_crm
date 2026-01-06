@@ -11,7 +11,7 @@ interface OrderFormProps {
   onCancel: () => void;
 }
 
-const STATUSES: OrderStatus[] = ['new', 'in_progress', 'completed'];
+const STATUSES: OrderStatus[] = ['in_progress', 'completed'];
 
 const DEFAULT_MILESTONES: Partial<Milestone>[] = [
   { title: 'Avans to\'lov', percentage: 30, tasks: ['Loyihani boshlash', 'Tahlil qilish'] },
@@ -23,7 +23,7 @@ export default function OrderForm({ clientId, onSuccess, onCancel }: OrderFormPr
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const [status, setStatus] = useState<OrderStatus>('new');
+  const [status, setStatus] = useState<OrderStatus>('in_progress');
   const [useMilestones, setUseMilestones] = useState(false);
   const [milestones, setMilestones] = useState<Partial<Milestone>[]>(DEFAULT_MILESTONES);
   const [isSubmitting, setIsSubmitting] = useState(false);

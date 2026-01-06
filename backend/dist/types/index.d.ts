@@ -126,6 +126,13 @@ export interface MilestoneInput {
     status?: 'pending' | 'in_progress' | 'completed' | 'paid';
     tasks?: string[];
 }
+export interface SelectedServiceInput {
+    categoryId: string;
+    categoryName: string;
+    serviceId: string;
+    serviceName: string;
+    price: number;
+}
 export interface CreateOrderRequest {
     clientId: string;
     title: string;
@@ -133,6 +140,7 @@ export interface CreateOrderRequest {
     amount?: number;
     status?: OrderStatus;
     milestones?: MilestoneInput[];
+    selectedServices?: SelectedServiceInput[];
 }
 export interface UpdateOrderRequest {
     title?: string;

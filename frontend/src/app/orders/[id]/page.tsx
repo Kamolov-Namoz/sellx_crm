@@ -7,7 +7,6 @@ import { useToast } from '@/contexts/ToastContext';
 import { orderService, Developer, TeamMember } from '@/services/order.service';
 import { 
   Order, 
-  OrderStatus,
   Milestone,
   ORDER_STATUS_LABELS, 
   ORDER_STATUS_COLORS,
@@ -59,26 +58,17 @@ function OrderDetailContent() {
   };
 
   const handleMilestoneAction = async (milestoneId: string, currentStatus: MilestoneStatus) => {
-    const nextStatus = getNextMilestoneStatus(currentStatus);
-    if (!nextStatus) return;
-    
-    // Agar "Boshlash" bosilsa - tracking sahifasiga o'tish
-    if (currentStatus === 'pending' && nextStatus.status === 'in_progress') {
-      // Avval statusni yangilaymiz
-      try {
-        await orderService.updateMilestoneStatus(params.id as string, milestoneId, nextStatus.status);
-        // Keyin tracking sahifasiga o'tamiz
-        router.push(`/orders/${params.id}/milestone/${milestoneId}`);
-      } catch {
-        toast.error('Xatolik');
-      }
+    // Faqat completed -> paid o'tishga ruxsat beramiz
+    if (currentStatus !== 'completed') {
+      // Boshqa statuslar uchun faqat tracking sahifasiga o'tish
+      router.push(`/orders/${params.id}/milestone/${milestoneId}`);
       return;
     }
     
-    // Boshqa holatlar uchun oddiy status yangilash
+    // Completed -> Paid
     try {
-      await orderService.updateMilestoneStatus(params.id as string, milestoneId, nextStatus.status);
-      toast.success('Status yangilandi');
+      await orderService.updateMilestoneStatus(params.id as string, milestoneId, 'paid');
+      toast.success('To\'lov tasdiqlandi');
       loadOrder();
     } catch {
       toast.error('Xatolik');
@@ -338,9 +328,9 @@ function OrderDetailContent() {
 }
 
 function getNextMilestoneStatus(status: MilestoneStatus): { status: MilestoneStatus; label: string } | null {
-  if (status === 'pending') return { status: 'in_progress', label: 'Boshlash' };
-  if (status === 'in_progress') return { status: 'completed', label: 'Bajarildi' };
-  if (status === 'completed') return { status: 'paid', label: 'To\'landi' };
+  // Faqat completed bo'lganda "To'landi" tugmasini ko'rsatamiz
+  // Boshqa statuslar avtomatik hisoblanadi
+  if (status === 'completed') return { status: 'paid', label: 'To\'landi deb belgilash' };
   return null;
 }
 
@@ -349,7 +339,6 @@ function EditOrderModal({ order, onClose, onSuccess }: { order: Order; onClose: 
   const [title, setTitle] = useState(order.title);
   const [description, setDescription] = useState(order.description || '');
   const [amount, setAmount] = useState(order.amount?.toString() || '');
-  const [status, setStatus] = useState<OrderStatus>(order.status);
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -364,7 +353,6 @@ function EditOrderModal({ order, onClose, onSuccess }: { order: Order; onClose: 
         title: title.trim(),
         description: description.trim() || undefined,
         amount: amount ? parseFloat(amount) : undefined,
-        status
       });
       toast.success('Loyiha yangilandi');
       onSuccess();
@@ -419,18 +407,11 @@ function EditOrderModal({ order, onClose, onSuccess }: { order: Order; onClose: 
               style={{ backgroundColor: '#2d3848' }}
             />
           </div>
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Status</label>
-            <select
-              value={status}
-              onChange={e => setStatus(e.target.value as OrderStatus)}
-              className="w-full rounded-lg px-3 py-2.5 text-white border-0 outline-none focus:ring-2 focus:ring-primary-500"
-              style={{ backgroundColor: '#2d3848' }}
-            >
-              <option value="new">Yangi</option>
-              <option value="in_progress">Jarayonda</option>
-              <option value="completed">Tugallangan</option>
-            </select>
+          {/* Status avtomatik hisoblanadi - ko'rsatilmaydi */}
+          <div className="bg-dark-700 rounded-lg p-3">
+            <p className="text-xs text-gray-500">
+              💡 Loyiha statusi avtomatik hisoblanadi: barcha vazifalar bajarilganda "Tugallangan" bo'ladi.
+            </p>
           </div>
           <div className="flex gap-3 pt-2">
             <button 
@@ -482,7 +463,6 @@ function EditMilestoneModal({
   const [percentage, setPercentage] = useState(milestone.percentage.toString());
   const [dueDate, setDueDate] = useState(milestone.dueDate ? new Date(milestone.dueDate).toISOString().split('T')[0] : '');
   const [tasks, setTasks] = useState(milestone.tasks?.join('\n') || '');
-  const [status, setStatus] = useState<MilestoneStatus>(milestone.status);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -499,7 +479,6 @@ function EditMilestoneModal({
     
     setSaving(true);
     try {
-      // Avval ma'lumotlarni yangilaymiz
       await orderService.updateMilestone(orderId, milestone._id!, {
         title: title.trim(),
         description: description.trim() || undefined,
@@ -508,11 +487,6 @@ function EditMilestoneModal({
         dueDate: dueDate || null,
         tasks: tasks.trim() ? tasks.split('\n').filter(t => t.trim()) : [],
       });
-      
-      // Agar status o'zgargan bo'lsa, statusni ham yangilaymiz
-      if (status !== milestone.status) {
-        await orderService.updateMilestoneStatus(orderId, milestone._id!, status);
-      }
       
       toast.success('Bosqich yangilandi');
       onSuccess();
@@ -554,59 +528,17 @@ function EditMilestoneModal({
         </div>
         
         <form onSubmit={handleSubmit} className="p-4 space-y-4 overflow-y-auto max-h-[70vh]">
-          {/* Status */}
-          <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Status</label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setStatus('pending')}
-                className={`py-2 rounded-lg text-xs font-medium transition ${
-                  status === 'pending' 
-                    ? 'bg-gray-500/30 text-gray-300 ring-2 ring-gray-500' 
-                    : 'text-gray-400'
-                }`}
-                style={{ backgroundColor: status === 'pending' ? undefined : '#2d3848' }}
-              >
-                Kutilmoqda
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatus('in_progress')}
-                className={`py-2 rounded-lg text-xs font-medium transition ${
-                  status === 'in_progress' 
-                    ? 'bg-blue-500/30 text-blue-300 ring-2 ring-blue-500' 
-                    : 'text-gray-400'
-                }`}
-                style={{ backgroundColor: status === 'in_progress' ? undefined : '#2d3848' }}
-              >
-                Jarayonda
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatus('completed')}
-                className={`py-2 rounded-lg text-xs font-medium transition ${
-                  status === 'completed' 
-                    ? 'bg-green-500/30 text-green-300 ring-2 ring-green-500' 
-                    : 'text-gray-400'
-                }`}
-                style={{ backgroundColor: status === 'completed' ? undefined : '#2d3848' }}
-              >
-                Bajarildi
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatus('paid')}
-                className={`py-2 rounded-lg text-xs font-medium transition ${
-                  status === 'paid' 
-                    ? 'bg-purple-500/30 text-purple-300 ring-2 ring-purple-500' 
-                    : 'text-gray-400'
-                }`}
-                style={{ backgroundColor: status === 'paid' ? undefined : '#2d3848' }}
-              >
-                To'landi
-              </button>
+          {/* Status - faqat ko'rsatish, o'zgartirish mumkin emas */}
+          <div className="bg-dark-700 rounded-lg p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-400">Joriy status:</span>
+              <span className={`text-xs px-2 py-1 rounded ${MILESTONE_STATUS_COLORS[milestone.status]}`}>
+                {MILESTONE_STATUS_LABELS[milestone.status]}
+              </span>
             </div>
+            <p className="text-xs text-gray-500 mt-2">
+              💡 Status avtomatik hisoblanadi: vazifalar bajarilganda "Bajarildi" bo'ladi.
+            </p>
           </div>
 
           {/* Bosqich nomi */}

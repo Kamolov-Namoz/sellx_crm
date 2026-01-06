@@ -5,8 +5,8 @@ db = db.getSiblingDB('sales-automation');
 
 // Create application user with environment variables
 // These are passed from docker-compose.yml
-const appUser = process.env.MONGO_USER || 'sellx';
-const appPassword = process.env.MONGO_PASSWORD || 'sellxpassword';
+const appUser = process.env.MONGO_USER || 'prosell';
+const appPassword = process.env.MONGO_PASSWORD || 'prosellpassword';
 
 db.createUser({
   user: appUser,

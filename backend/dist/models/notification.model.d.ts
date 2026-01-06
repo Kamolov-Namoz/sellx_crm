@@ -1,5 +1,5 @@
 import mongoose, { Document } from 'mongoose';
-export type NotificationType = 'chat_message' | 'new_task' | 'task_completed' | 'project_update';
+export type NotificationType = 'new_task' | 'task_completed' | 'project_update';
 export interface INotification extends Document {
     userId: mongoose.Types.ObjectId;
     type: NotificationType;

@@ -39,7 +39,7 @@ const notificationSchema = new mongoose_1.Schema({
     userId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: true },
     type: {
         type: String,
-        enum: ['chat_message', 'new_task', 'task_completed', 'project_update'],
+        enum: ['new_task', 'task_completed', 'project_update'],
         required: true
     },
     title: { type: String, required: true },

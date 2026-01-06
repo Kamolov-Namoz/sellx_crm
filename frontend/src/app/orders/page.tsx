@@ -10,7 +10,7 @@ import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 import { format } from 'date-fns';
 
-const STATUSES: (OrderStatus | 'all')[] = ['all', 'new', 'in_progress', 'completed'];
+const STATUSES: (OrderStatus | 'all')[] = ['all', 'in_progress', 'completed'];
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);

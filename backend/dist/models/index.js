@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Notification = exports.ProjectChat = exports.ProjectTask = exports.Employee = exports.Conversation = exports.ScheduledReminder = exports.Order = exports.Client = exports.User = void 0;
+exports.ServiceCategory = exports.Notification = exports.ProjectTask = exports.Employee = exports.Conversation = exports.ScheduledReminder = exports.Order = exports.Client = exports.User = void 0;
 var user_model_1 = require("./user.model");
 Object.defineProperty(exports, "User", { enumerable: true, get: function () { return user_model_1.User; } });
 var client_model_1 = require("./client.model");
@@ -15,8 +15,8 @@ var employee_model_1 = require("./employee.model");
 Object.defineProperty(exports, "Employee", { enumerable: true, get: function () { return employee_model_1.Employee; } });
 var projectTask_model_1 = require("./projectTask.model");
 Object.defineProperty(exports, "ProjectTask", { enumerable: true, get: function () { return projectTask_model_1.ProjectTask; } });
-var projectChat_model_1 = require("./projectChat.model");
-Object.defineProperty(exports, "ProjectChat", { enumerable: true, get: function () { return projectChat_model_1.ProjectChat; } });
 var notification_model_1 = require("./notification.model");
 Object.defineProperty(exports, "Notification", { enumerable: true, get: function () { return notification_model_1.Notification; } });
+var serviceCategory_model_1 = require("./serviceCategory.model");
+Object.defineProperty(exports, "ServiceCategory", { enumerable: true, get: function () { return serviceCategory_model_1.ServiceCategory; } });
 //# sourceMappingURL=index.js.map

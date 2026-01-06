@@ -2,7 +2,7 @@ import { Types } from 'mongoose';
 export declare class NotificationService {
     create(data: {
         userId: string;
-        type: 'chat_message' | 'new_task' | 'task_completed' | 'project_update';
+        type: 'new_task' | 'task_completed' | 'project_update';
         title: string;
         message: string;
         data?: {
@@ -34,14 +34,6 @@ export declare class NotificationService {
         __v: number;
     }) | null>;
     markAllAsRead(userId: string): Promise<import("mongoose").UpdateWriteOpResult>;
-    notifyChatMessage(data: {
-        projectId: string;
-        projectTitle: string;
-        senderId: string;
-        senderName: string;
-        senderRole: 'user' | 'developer';
-        messagePreview: string;
-    }): Promise<void>;
     notifyNewTask(data: {
         projectId: string;
         projectTitle: string;

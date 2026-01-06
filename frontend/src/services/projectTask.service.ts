@@ -35,6 +35,8 @@ export interface ProjectTask {
   };
   title: string;
   description?: string;
+  serviceId?: string;
+  serviceName?: string;
   attachments?: TaskAttachment[];
   progress: number;
   status: 'in_progress' | 'completed';
@@ -117,6 +119,8 @@ export interface CreateTaskData {
   developerId: string;
   title: string;
   description?: string;
+  serviceId?: string;
+  serviceName?: string;
   attachments?: TaskAttachment[];
   dueDate?: string;
 }

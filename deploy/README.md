@@ -1,6 +1,6 @@
-# SellX Production Deployment Guide
+# ProSell Production Deployment Guide
 
-## Domain: sellx.prox.uz
+## Domain: prosell.prox.uz
 
 ## Tez boshlash (Quick Start)
 
@@ -12,8 +12,8 @@ ssh root@your-vps-ip
 ### 2. Loyihani yuklash
 ```bash
 cd /opt
-git clone your-repo-url sellx
-cd sellx/deploy
+git clone your-repo-url prosell
+cd prosell/deploy
 ```
 
 ### 3. Environment sozlash
@@ -65,7 +65,7 @@ sudo npm install -g pm2
 
 ### 4. Backend sozlash
 ```bash
-cd /opt/sellx/backend
+cd /opt/prosell/backend
 npm ci --only=production
 npm run build
 
@@ -74,18 +74,18 @@ cp .env.production .env
 nano .env  # O'zgaruvchilarni to'ldiring
 
 # PM2 bilan ishga tushirish
-pm2 start dist/index.js --name sellx-backend
+pm2 start dist/index.js --name prosell-backend
 pm2 save
 ```
 
 ### 5. Frontend sozlash
 ```bash
-cd /opt/sellx/frontend
+cd /opt/prosell/frontend
 npm ci
 npm run build
 
 # PM2 bilan ishga tushirish
-pm2 start npm --name sellx-frontend -- start
+pm2 start npm --name prosell-frontend -- start
 pm2 save
 ```
 
@@ -97,8 +97,8 @@ pm2 save
 
 ### 7. Nginx sozlash
 ```bash
-sudo cp /opt/sellx/deploy/nginx.conf /etc/nginx/sites-available/sellx
-sudo ln -s /etc/nginx/sites-available/sellx /etc/nginx/sites-enabled/
+sudo cp /opt/prosell/deploy/nginx.conf /etc/nginx/sites-available/prosell
+sudo ln -s /etc/nginx/sites-available/prosell /etc/nginx/sites-enabled/
 sudo rm /etc/nginx/sites-enabled/default
 sudo nginx -t
 sudo systemctl reload nginx
@@ -107,7 +107,7 @@ sudo systemctl reload nginx
 ### 8. SSL sertifikat
 ```bash
 sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d sellx.prox.uz
+sudo certbot --nginx -d prosell.prox.uz
 ```
 
 ---
@@ -135,7 +135,7 @@ pm2 restart all
 ### Database backup
 ```bash
 # Docker
-docker exec sellx-mongodb mongodump --out /backup
+docker exec prosell-mongodb mongodump --out /backup
 
 # Local
 mongodump --db sales-automation --out /backup
@@ -152,7 +152,7 @@ mongorestore --db sales-automation /backup/sales-automation
 
 - [ ] JWT_SECRET kamida 64 belgi
 - [ ] MongoDB parollari kuchli
-- [ ] CORS faqat sellx.prox.uz ga ruxsat
+- [ ] CORS faqat prosell.prox.uz ga ruxsat
 - [ ] SSL sertifikat o'rnatilgan
 - [ ] Firewall sozlangan (80, 443 portlar ochiq)
 
@@ -163,7 +163,7 @@ mongorestore --db sales-automation /backup/sales-automation
 ### Backend ishlamayapti
 ```bash
 # Loglarni tekshiring
-pm2 logs sellx-backend
+pm2 logs prosell-backend
 # yoki
 docker-compose logs backend
 ```

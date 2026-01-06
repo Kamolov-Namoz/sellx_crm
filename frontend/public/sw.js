@@ -1,5 +1,5 @@
-// Service Worker for SellX PWA
-const CACHE_NAME = 'sellx-v1';
+// Service Worker for ProSell PWA
+const CACHE_NAME = 'prosell-v1';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to cache on install
@@ -97,7 +97,7 @@ self.addEventListener('push', (event) => {
 
     event.waitUntil(
       self.registration.showNotification(
-        data.title || data.notification?.title || 'SellX',
+        data.title || data.notification?.title || 'ProSell',
         options
       )
     );

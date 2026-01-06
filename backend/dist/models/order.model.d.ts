@@ -17,11 +17,19 @@ export interface ITeamMember {
     role: 'developer' | 'team_lead';
     joinedAt: Date;
 }
+export interface ISelectedService {
+    categoryId: mongoose.Types.ObjectId;
+    categoryName: string;
+    serviceId: mongoose.Types.ObjectId;
+    serviceName: string;
+    price: number;
+}
 export interface OrderDocument extends Omit<IOrder, '_id'>, Document {
     milestones?: IMilestone[];
     totalPaid?: number;
     team?: ITeamMember[];
     teamLeadId?: mongoose.Types.ObjectId;
+    selectedServices?: ISelectedService[];
 }
 export declare const Order: mongoose.Model<OrderDocument, {}, {}, {}, mongoose.Document<unknown, {}, OrderDocument, {}, {}> & OrderDocument & Required<{
     _id: mongoose.Types.ObjectId;

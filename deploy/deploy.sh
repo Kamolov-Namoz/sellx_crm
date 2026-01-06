@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # ===========================================
-# SellX Deployment Script
-# Domain: sellx.prox.uz
+# ProSell Deployment Script
+# Domain: prosell.prox.uz
 # ===========================================
 
 set -e
 
-echo "🚀 SellX Deployment Script"
+echo "🚀 ProSell Deployment Script"
 echo "=========================="
 
 # Colors
@@ -23,7 +23,7 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # Variables
-DOMAIN="sellx.prox.uz"
+DOMAIN="prosell.prox.uz"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(dirname "$SCRIPT_DIR")"
 
@@ -109,7 +109,7 @@ fi
 
 echo -e "${YELLOW}Step 7: Setting up SSL auto-renewal...${NC}"
 # Add cron job for SSL renewal
-CRON_CMD="0 3 * * * certbot renew --quiet --deploy-hook 'docker restart sellx-nginx'"
+CRON_CMD="0 3 * * * certbot renew --quiet --deploy-hook 'docker restart prosell-nginx'"
 (crontab -l 2>/dev/null | grep -v "certbot renew"; echo "$CRON_CMD") | crontab -
 
 echo ""

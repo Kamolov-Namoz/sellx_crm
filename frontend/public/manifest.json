@@ -1,6 +1,6 @@
 {
-  "name": "Sales Automation",
-  "short_name": "SellX",
+  "name": "ProSell - Sales Automation",
+  "short_name": "ProSell",
   "description": "Sales agent client management and follow-up reminders",
   "start_url": "/",
   "scope": "/",
@@ -8,7 +8,7 @@
   "background_color": "#0f172a",
   "theme_color": "#3b82f6",
   "orientation": "portrait-primary",
-  "id": "sellx-pwa",
+  "id": "prosell-pwa",
   "icons": [
     {
       "src": "/icon-192.svg",

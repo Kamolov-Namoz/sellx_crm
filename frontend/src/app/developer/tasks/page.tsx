@@ -59,8 +59,8 @@ export default function DeveloperTasksPage() {
   const filteredTasks = tasks.filter(task => {
     if (filter === 'all') return true;
     if (filter === 'completed') return task.isAccepted;
-    if (filter === 'in_progress') return !task.isAccepted && task.status !== 'pending';
-    return task.status === filter && !task.isAccepted;
+    if (filter === 'in_progress') return !task.isAccepted;
+    return !task.isAccepted;
   });
 
   const getClientName = (task: ProjectTask) => {

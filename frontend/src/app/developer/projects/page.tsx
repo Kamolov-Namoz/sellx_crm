@@ -7,7 +7,6 @@ import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 import { useToast } from '@/contexts/ToastContext';
 import { projectTaskService, DeveloperProject } from '@/services/projectTask.service';
-import { projectChatService } from '@/services/projectChat.service';
 
 const statusColors = {
   new: 'bg-blue-500',
@@ -24,13 +23,11 @@ const statusLabels = {
 export default function DeveloperProjectsPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<DeveloperProject[]>([]);
-  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const toast = useToast();
 
   useEffect(() => {
     loadProjects();
-    loadUnreadCounts();
   }, []);
 
   const loadProjects = async () => {
@@ -42,17 +39,6 @@ export default function DeveloperProjectsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const loadUnreadCounts = async () => {
-    try {
-      const res = await projectChatService.getDeveloperUnreadAll();
-      if (res.success && res.data) {
-        const counts: Record<string, number> = {};
-        res.data.forEach(item => { counts[item._id] = item.count; });
-        setUnreadCounts(counts);
-      }
-    } catch {}
   };
 
   const getClientName = (project: DeveloperProject) => {
@@ -100,13 +86,6 @@ export default function DeveloperProjectsPage() {
                   className="bg-dark-800 rounded-xl p-4 cursor-pointer hover:bg-dark-700 transition-colors relative"
                   onClick={() => router.push(`/developer/projects/${project._id}`)}
                 >
-                  {/* Unread badge */}
-                  {unreadCounts[project._id] > 0 && (
-                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                      <span className="text-xs text-white font-bold">{unreadCounts[project._id]}</span>
-                    </div>
-                  )}
-                  
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">

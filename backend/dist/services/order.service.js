@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -30,6 +63,7 @@ class OrderService {
             status: 'in_progress', // Loyiha yaratilganda avtomatik jarayonda
             milestones: data.milestones || [],
             totalPaid: 0,
+            selectedServices: data.selectedServices || [],
         });
         await order.save();
         return order.toObject();
@@ -88,13 +122,15 @@ class OrderService {
         return order;
     }
     /**
-     * Update order
+     * Update order - status avtomatik hisoblanadi, qo'lda o'zgartirib bo'lmaydi
      */
     async updateOrder(userId, orderId, data) {
+        // Status ni o'zgartirishga ruxsat bermaymiz - u avtomatik hisoblanadi
+        const { status, ...safeData } = data;
         const order = await models_1.Order.findOneAndUpdate({
             _id: orderId,
             userId: new mongoose_1.default.Types.ObjectId(userId),
-        }, { $set: data }, { new: true, runValidators: true })
+        }, { $set: safeData }, { new: true, runValidators: true })
             .populate('clientId', 'fullName companyName phoneNumber')
             .lean();
         if (!order) {
@@ -179,9 +215,14 @@ class OrderService {
         };
     }
     /**
-     * Update milestone status
+     * Update milestone status - faqat 'paid' statusini qo'lda o'zgartirish mumkin
+     * Boshqa statuslar (pending, in_progress, completed) avtomatik hisoblanadi
      */
     async updateMilestoneStatus(userId, orderId, milestoneId, status) {
+        // Faqat 'paid' statusini qabul qilamiz
+        if (status !== 'paid') {
+            throw new error_middleware_1.AppError('Faqat to\'landi statusini belgilash mumkin', 400, 'INVALID_STATUS');
+        }
         const order = await models_1.Order.findOne({
             _id: orderId,
             userId: new mongoose_1.default.Types.ObjectId(userId),
@@ -193,23 +234,16 @@ class OrderService {
         if (!milestone) {
             throw new error_middleware_1.AppError('Milestone not found', 404, 'MILESTONE_NOT_FOUND');
         }
-        milestone.status = status;
-        if (status === 'completed') {
-            milestone.completedAt = new Date();
+        // Faqat completed bo'lgan bosqichni paid qilish mumkin
+        if (milestone.status !== 'completed') {
+            throw new error_middleware_1.AppError('Faqat bajarilgan bosqichni to\'langan deb belgilash mumkin', 400, 'MILESTONE_NOT_COMPLETED');
         }
-        else if (status === 'paid') {
-            milestone.paidAt = new Date();
-            // Update totalPaid
-            const totalPaid = order.milestones
-                ?.filter((m) => m.status === 'paid')
-                .reduce((sum, m) => sum + m.amount, 0) || 0;
-            order.totalPaid = totalPaid + milestone.amount;
-        }
-        // Update order progress based on milestones
-        if (order.milestones && order.milestones.length > 0) {
-            const completedOrPaid = order.milestones.filter((m) => m.status === 'completed' || m.status === 'paid').length;
-            order.progress = Math.round((completedOrPaid / order.milestones.length) * 100);
-        }
+        milestone.status = 'paid';
+        milestone.paidAt = new Date();
+        // totalPaid ni qayta hisoblash
+        order.totalPaid = order.milestones
+            ?.filter((m) => m.status === 'paid')
+            .reduce((sum, m) => sum + m.amount, 0) || 0;
         await order.save();
         return order.toObject();
     }
@@ -246,7 +280,7 @@ class OrderService {
         return order.toObject();
     }
     /**
-     * Delete milestone
+     * Delete milestone - vazifalar bo'lsa o'chirishga ruxsat bermaydi
      */
     async deleteMilestone(userId, orderId, milestoneId) {
         const order = await models_1.Order.findOne({
@@ -255,6 +289,15 @@ class OrderService {
         });
         if (!order) {
             throw new error_middleware_1.AppError('Order not found', 404, 'ORDER_NOT_FOUND');
+        }
+        // Bosqichga tegishli vazifalar bormi tekshirish
+        const { ProjectTask } = await Promise.resolve().then(() => __importStar(require('../models')));
+        const tasksCount = await ProjectTask.countDocuments({
+            projectId: new mongoose_1.default.Types.ObjectId(orderId),
+            milestoneId: new mongoose_1.default.Types.ObjectId(milestoneId),
+        });
+        if (tasksCount > 0) {
+            throw new error_middleware_1.AppError(`Bu bosqichda ${tasksCount} ta vazifa bor. Avval vazifalarni o'chiring.`, 400, 'MILESTONE_HAS_TASKS');
         }
         order.milestones = order.milestones?.filter((m) => m._id?.toString() !== milestoneId);
         await order.save();

@@ -89,11 +89,7 @@ export default function DeveloperDashboard() {
                     style={{ width: `${stats?.avgProgress || 0}%` }}
                   />
                 </div>
-                <div className="grid grid-cols-3 gap-2 mt-4">
-                  <div className="text-center p-2 bg-yellow-500/10 rounded-lg">
-                    <p className="text-lg font-bold text-yellow-400">{stats?.pendingTasks || 0}</p>
-                    <p className="text-xs text-gray-500">Kutilmoqda</p>
-                  </div>
+                <div className="grid grid-cols-2 gap-2 mt-4">
                   <div className="text-center p-2 bg-blue-500/10 rounded-lg">
                     <p className="text-lg font-bold text-blue-400">{stats?.inProgressTasks || 0}</p>
                     <p className="text-xs text-gray-500">Jarayonda</p>

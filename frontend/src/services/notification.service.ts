@@ -5,7 +5,7 @@ import { ApiResponse } from '@/types';
 export interface AppNotification {
   _id: string;
   userId: string;
-  type: 'chat_message' | 'new_task' | 'task_completed' | 'project_update';
+  type: 'new_task' | 'task_completed' | 'project_update';
   title: string;
   message: string;
   data?: {
