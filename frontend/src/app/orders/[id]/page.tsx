@@ -305,7 +305,7 @@ function OrderDetailContent() {
 
       {/* Edit Milestone Modal */}
       {editingMilestone && (
-        <EditMilestoneModal
+        <EditMilestoneModal 
           orderId={params.id as string}
           milestone={editingMilestone}
           onClose={() => setEditingMilestone(null)}

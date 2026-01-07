@@ -433,13 +433,16 @@ function AddTaskModal({
   };
 
   // Xizmatlarni kategoriya bo'yicha guruhlash
-  const groupedServices = selectedServices?.reduce((acc, service) => {
-    if (!acc[service.categoryName]) {
-      acc[service.categoryName] = [];
-    }
-    acc[service.categoryName].push(service);
-    return acc;
-  }, {} as Record<string, typeof selectedServices>);
+  const groupedServices: Record<string, { categoryId: string; categoryName: string; serviceId: string; serviceName: string; price: number }[]> = {};
+  
+  if (selectedServices) {
+    selectedServices.forEach(service => {
+      if (!groupedServices[service.categoryName]) {
+        groupedServices[service.categoryName] = [];
+      }
+      groupedServices[service.categoryName].push(service);
+    });
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
@@ -461,10 +464,10 @@ function AddTaskModal({
             <div>
               <label className="block text-sm text-gray-400 mb-1.5">Xizmat tanlang</label>
               <div className="space-y-2 max-h-40 overflow-y-auto">
-                {Object.entries(groupedServices || {}).map(([categoryName, services]) => (
+                {Object.keys(groupedServices).map((categoryName) => (
                   <div key={categoryName}>
                     <p className="text-xs text-gray-500 mb-1">{categoryName}</p>
-                    {services?.map(service => (
+                    {groupedServices[categoryName].map(service => (
                       <button
                         key={service.serviceId}
                         type="button"
